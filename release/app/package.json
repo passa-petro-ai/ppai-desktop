@@ -1,0 +1,24 @@
+{
+	"name": "ppai-desktop",
+	"version": "0.0.1-dev",
+	"description": "Passa Petro AI Desktop",
+	"homepage": "https://passa-petro-ai.github.io/ppai-desktop",
+	"author": {
+		"name": "Gerardo Maranan",
+		"email": "gerardojr.maranan@gmail.com",
+		"url": "https://github.com/passa-petro-ai/ppai-desktop"
+	},
+	"bugs": {
+		"url": "https://github.com/passa-petro-ai/ppai-desktop/issues",
+		"email": "gerardojr.maranan@gmail.com"
+	},
+	"main": "./dist/main/main.js",
+	"scripts": {
+		"rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
+		"postinstall": "npm run rebuild && npm run link-modules",
+		"link-modules": "node -r ts-node/register ../../.erb/scripts/link-modules.ts"
+	},
+	"dependencies": {
+		"@aptabase/electron": "^0.3.1"
+	}
+}

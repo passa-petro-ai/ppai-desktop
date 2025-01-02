@@ -1,0 +1,48 @@
+/* eslint global-require: off, no-console: off, promise/always-return: off */
+
+/*
+Todo:
+- Allow disabling of the inputs
+- Debounce Slider/color picker input
+- sass
+*/
+
+// TODO: ERROR
+// 16:38:08.836 > Main>  Error: Failed to load image from path 'C:\Users\Librarian\ppai-desktop\assets\icons\icon.ico'
+//     at Object.initialize (C:\Users\Librarian\ppai-desktop\src\main\tray.ts:26:17)
+//     at ready (C:\Users\Librarian\ppai-desktop\src\main\startup.ts:76:7)
+
+import { app } from 'electron';
+import Logger from 'electron-log/main';
+import path from 'path';
+import { $errors, $init } from '../config/strings';
+import ipc from './ipc';
+import { ready, startup } from './startup';
+
+// Initialize the timer
+console.time(app.name);
+console.timeLog(app.name, $init.app);
+
+// Register ipcMain listeners
+ipc.initialize();
+
+// SETUP APP (runs after startup())
+app
+	.whenReady()
+	.then(ready) // <-- this is where the app is initialized
+	.catch((error: Error) => {
+		Logger.error($errors.prefix, error);
+	});
+
+// LAUNCH THE APP
+startup();
+
+// Fix the icon loading issue
+const iconPath = path.join(__dirname, '..', '..', 'assets', 'icons', 'icon.ico');
+app.whenReady().then(() => {
+  // Set the app icon here
+});
+
+// See the idle() function in src/main/startup.ts
+// it's called in the ipcMain.on(ipcChannels.RENDERER_READY) listener
+// when the renderer process is ready
