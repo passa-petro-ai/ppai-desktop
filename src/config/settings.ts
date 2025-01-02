@@ -31,7 +31,7 @@ export interface SettingsType {
 
 // These are the default settings, imported by the store
 export const DEFAULT_SETTINGS: SettingsType = {
-	accentColor: '#b453ff',
+	accentColor: '#FF6A00',
 	allowAnalytics: true,
 	allowAutoUpdate: true,
 	allowSounds: true,
