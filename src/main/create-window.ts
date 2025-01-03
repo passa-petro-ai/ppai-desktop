@@ -52,7 +52,7 @@ const createWindow = (opts?: BrowserWindowConstructorOptions) => {
 
 		// Don't set icon on Windows so the exe's ico will be used as window and
 		// taskbar's icon. See https://github.com/atom/atom/issues/4811 for more.
-		// ...(is.linux ? { icon: getAssetPath('icon.png') } : {}),
+		...(is.linux ? { icon: getAssetPath('icon.png') } : {}),
 		...opts,
 	};
 
@@ -127,12 +127,12 @@ export const createMainWindow = async () => {
 		minHeight: 420,
 	};
 
-	if(is.windows){
+	if (is.windows) {
 		options.titleBarOverlay = {
-			color: getSetting('theme') === 'dark' ? '#000000' : '#ffffff',
+			color: getSetting('theme') === 'dark' ? '#000000' : '#1c1917',
 			symbolColor: String(getSetting('accentColor')) || '#000000',
-			height: 34
-		  }
+			height: 36,
+		};
 	}
 
 	const window = createWindow(options);

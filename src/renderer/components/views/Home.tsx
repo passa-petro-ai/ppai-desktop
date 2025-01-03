@@ -1,69 +1,37 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { PROTOCOL } from '@/config/config';
-import { nav } from '@/renderer/config/nav';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from '@/components/ui/card';
 import { useGlobalContext } from '@/renderer/context/global-context';
-import styles from '@/renderer/styles/CssModuleExample.module.scss';
-import { Link } from 'react-router-dom';
-import { InputComboboxForm } from '../input/InputComboboxForm';
+import { NEW_PROJECT_DIALOG_KEY } from '../modals/NewProjectDialog';
+import { EXISTING_PROJECT_DIALOG_KEY } from '../modals/ExistingProjectDialog';
 
 export function Home() {
-	const { settings, setSettings } = useGlobalContext();
-
-	const handleThemeChange = (value: string) => {
-		setSettings({ theme: value as 'light' | 'dark' | 'system' });
-	};
+	const { openModal } = useGlobalContext();
 
 	return (
-		<div className="container mx-auto p-6 space-y-6">
-			<img
-				className="max-w-xs mx-auto"
-				src={`${PROTOCOL}://icon.png`}
-				alt="logo"
-			/>
-
-			<h1 className="text-3xl font-bold">Welcome to PPAI Desktop</h1>
-			<div className="flex flew-wrap justify-around gap-md">
-				<Card className={styles.example}>
-					<CardHeader>
-						<CardTitle>Features</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<ul className="list-disc list-inside">
-							<li>Hot-reloading</li>
-							<li>React</li>
-							<li>TypeScript</li>
-							<li>TailwindCSS</li>
-							<li>Shadcn/UI</li>
-							<li>Css Modules</li>
-							<li>React Router</li>
-						</ul>
-					</CardContent>
-				</Card>
-
-				<Card className="w-full max-w-md">
-					<CardHeader>
-						<CardTitle>Quick Settings</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<InputComboboxForm
-							items={[
-								{ value: 'light', label: 'Light' },
-								{ value: 'dark', label: 'Dark' },
-								{ value: 'system', label: 'System' },
-							]}
-							value={settings.theme}
-							onChange={handleThemeChange}
-							label="Theme"
-							description="Select your preferred application theme."
-						/>
-						<Link to={nav.settings.href} className="block">
-							<Button className="w-full">Go to Settings</Button>
-						</Link>
-					</CardContent>
-				</Card>
-			</div>
-
+		<div className="flex h-full content-center">
+			<Card className="m-auto w-96">
+				<CardHeader>
+					<CardTitle>Get Started</CardTitle>
+					<CardDescription>
+						A better way for Seismic Data Processing and Imaging by machine
+						learning and deep learning.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="grid gap-4 grid-cols-2">
+						<Button onClick={() => openModal(NEW_PROJECT_DIALOG_KEY)} className="w-full">New Project</Button>
+						<Button onClick={() => openModal(EXISTING_PROJECT_DIALOG_KEY)} variant="secondary" className="w-full">
+							Existing Project
+						</Button>
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

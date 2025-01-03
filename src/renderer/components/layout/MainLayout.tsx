@@ -14,7 +14,7 @@ export function MainLayout({ children }: { children?: React.ReactNode }) {
 	return (
 		<div className="w-full h-full flex flex-col">
 			<Menu className="shrink-0" />
-			<div className="border-t grow flex min-h-0">
+			<div className="border-t border-[#1c1917] grow flex min-h-0">
 				<div className="grow min-w-0 overflow-y-auto">
 					{children || <Outlet />}
 				</div>

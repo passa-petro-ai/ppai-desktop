@@ -15,9 +15,9 @@ import '@/renderer/styles/globals.scss';
 
 import { ExistingProjectDialog } from '@/renderer/components/modals/ExistingProjectDialog';
 import { NewProjectDialog } from '@/renderer/components/modals/NewProjectDialog';
-import { GeometricRotationDialog } from '../../modals/GeometricRotationDialog';
-import { GetRangeDialog } from '../../modals/GetRangeDialog';
-import { CsgtFourierTransformDialog } from '../../modals/CsgtFourierTransform';
+import { GeometricRotationDialog } from '@/renderer/components/modals/GeometricRotationDialog';
+import { GetRangeDialog } from '@/renderer/components/modals/GetRangeDialog';
+import { CsgtFourierTransformDialog } from '@/renderer/components/modals/CsgtFourierTransformDialog';
 
 export default function App() {
 	const index =

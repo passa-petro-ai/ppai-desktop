@@ -91,12 +91,3 @@
 		-webkit-app-region: no-drag;
 	}
 }
-
-.fadeIn {
-  animation: fadeInAnimation 2s;
-}
-
-@keyframes fadeInAnimation {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
