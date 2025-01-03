@@ -15,7 +15,12 @@ import {
 	testNotificationMenuItem,
 	testSoundMenuItem,
 } from './menu-items';
-import { getSetting, setSettings } from './store-actions';
+import {
+	getSetting,
+	setSettings,
+	openModal,
+	closeModal,
+} from './store-actions';
 import { is } from './util';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
@@ -267,7 +272,6 @@ export default class MenuBuilder {
 			subMenuView,
 			subMenuWindow,
 			this.subMenuSettings,
-			this.subMenuHelp,
 			...(is.debug ? [this.subMenuDev] : []),
 		];
 	}
@@ -278,17 +282,111 @@ export default class MenuBuilder {
 				label: '&File',
 				submenu: [
 					{
-						label: '&Open',
-						accelerator: 'Ctrl+O',
-						id: 'open',
+						label: '&New Project',
+						accelerator: 'Ctrl+N',
+						id: 'new',
+						click: () => {
+							openModal('NewProjectDialog');
+						},
 					},
 					{
-						label: '&Close',
+						label: '&Open Project',
+						accelerator: 'Ctrl+O',
+						id: 'open',
+						click: () => {
+							openModal('ExistingProjectDialog');
+						},
+					},
+					{ type: 'separator' },
+					{
+						label: '&Exit',
 						accelerator: 'Ctrl+W',
 						click: () => {
 							this.mainWindow.close();
 						},
 						id: 'close',
+					},
+				],
+			},
+			{
+				label: 'Tools',
+				submenu: [
+					{
+						label: 'Header Tools',
+						id: 'headerTools',
+						submenu: [
+							{
+								label: 'Geometry Rotation',
+								id: 'geometryRotation',
+								click: () => {
+									openModal('GeometricRotationDialog');
+								},
+							},
+							{
+								label: 'Get Ranges',
+								id: 'getRanges',
+								click: () => {
+									openModal('GetRangeDialog');
+								},
+							},
+						],
+					},
+					{
+						label: 'Trace Tools',
+						id: 'traceTools',
+						submenu: [
+							{
+								label: 'Bandpass Filtering',
+								id: 'bandpassFiltering',
+							},
+							{
+								label: 'Resampling',
+								id: 'resampling',
+							},
+							{
+								label: 'Gaining',
+								id: 'gaining',
+							},
+							{
+								label: 'CSGT Fourier Transform',
+								id: 'csgtFourierTransform',
+								click: () => {
+									openModal('CsgtFourierTransformDialog');
+								},
+							},
+						],
+					},
+					{
+						label: 'Image Tools',
+						id: 'imageTools',
+						submenu: [
+							{
+								label: 'Smoothing',
+								id: 'smoothing',
+							},
+							{
+								label: 'Interpolation',
+								id: 'interpolation',
+							},
+							{
+								label: 'Illumination',
+								id: 'illumination',
+							},
+						],
+					},
+				],
+			},
+			{
+				label: 'Processing',
+				id: 'processing',
+				submenu: [
+					{
+						label: 'Full Waveform Inversion',
+						id: 'fullWaveformInversion',
+					},
+					{
+						label: 'Reverse Time Migration',
+						id: 'reverseTimeMigration',
 					},
 				],
 			},
@@ -340,7 +438,6 @@ export default class MenuBuilder {
 							],
 			},
 			this.subMenuSettings,
-			this.subMenuHelp,
 			...(is.debug ? [this.subMenuDev] : []),
 		];
 

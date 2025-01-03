@@ -23,11 +23,6 @@ export function Home() {
 			/>
 
 			<h1 className="text-3xl font-bold">Welcome to PPAI Desktop</h1>
-			<p className="text-muted-foreground">
-				A professional boilerplate for building cross-platform Electron
-				applications.
-			</p>
-
 			<div className="flex flew-wrap justify-around gap-md">
 				<Card className={styles.example}>
 					<CardHeader>
@@ -68,6 +63,7 @@ export function Home() {
 					</CardContent>
 				</Card>
 			</div>
+
 		</div>
 	);
 }

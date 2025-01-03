@@ -12,6 +12,8 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 
 const Form = FormProvider
 
@@ -152,14 +154,24 @@ const FormMessage = React.forwardRef<
   }
 
   return (
-    <p
-      ref={ref}
-      id={formMessageId}
-      className={cn("text-[0.8rem] font-medium text-destructive", className)}
-      {...props}
-    >
-      {body}
-    </p>
+    // <p
+    //   ref={ref}
+    //   id={formMessageId}
+    //   className={cn("text-[0.8rem] font-medium text-destructive", className)}
+    //   {...props}
+    // >
+    //   {body}
+    // </p>
+
+    <Alert variant="destructive" 
+      className={cn("text-[0.8rem] font-medium", className)}
+      {...props}>
+      <ExclamationTriangleIcon className="h-4 w-4" />
+      <AlertTitle>Invalid</AlertTitle>
+      <AlertDescription>
+        {body}
+      </AlertDescription>
+    </Alert>
   )
 })
 FormMessage.displayName = "FormMessage"

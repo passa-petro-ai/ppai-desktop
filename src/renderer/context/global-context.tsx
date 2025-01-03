@@ -17,6 +17,7 @@ import { AppInfoType } from '@/types/app';
 import { CustomAcceleratorsType } from '@/types/keyboard';
 import { MenuItemConstructorOptions } from 'electron/renderer';
 import { toast } from 'sonner';
+import { OpenModalsTrackerType } from '@/main/store';
 
 interface GlobalContextType {
 	app: Partial<AppInfoType>;
@@ -26,6 +27,9 @@ interface GlobalContextType {
 	messages: string[];
 	settings: SettingsType;
 	setSettings: (newSettings: Partial<SettingsType>) => void;
+	modals: OpenModalsTrackerType;
+	openModal: (key: string) => void;
+	closeModal: (key: string) => void;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -36,6 +40,9 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	messages: [],
 	settings: DEFAULT_SETTINGS,
 	setSettings: () => {},
+	modals: [],
+	openModal: () => {},
+	closeModal: () => {},
 });
 
 export function GlobalContextProvider({
@@ -55,19 +62,32 @@ export function GlobalContextProvider({
 	const [keybinds, setCurrentKeybinds] =
 		React.useState<CustomAcceleratorsType>(DEFAULT_KEYBINDS);
 
+	const [modals, setCurrentModals] = React.useState<OpenModalsTrackerType>([]);
+
 	useEffect(() => {
 		// Create handler for receiving asynchronous messages from the main process
 		const synchronizeAppState = async () => {
 			console.log(ipcChannels.APP_UPDATED);
 
+
+
 			window.electron.ipcRenderer
 				.invoke(ipcChannels.GET_RENDERER_SYNC)
 				.then((res) => {
-					const { settings: s, keybinds: k, messages: m, appMenu: menu } = res;
+					console.log({ res });
+					const {
+						settings: s,
+						keybinds: k,
+						messages: m,
+						appMenu: menu,
+						modals: d,
+					} = res;
+
 					setCurrentSettings(s);
 					setCurrentKeybinds(k);
 					setMessages(m);
 					setAppMenu(menu);
+					setCurrentModals(d);
 				})
 				.catch(console.error);
 		};
@@ -138,6 +158,14 @@ export function GlobalContextProvider({
 		window.electron.setSettings(newSettings);
 	}, []);
 
+	const openModal = useCallback((key: string) => {
+		window.electron.openModal(key);
+	}, []);
+
+	const closeModal = useCallback((key: string) => {
+		window.electron.closeModal(key);
+	}, []);
+
 	const value = useMemo(() => {
 		return {
 			app: appInfo,
@@ -147,8 +175,21 @@ export function GlobalContextProvider({
 			setSettings,
 			messages,
 			message: messages[0] ?? '',
+			modals,
+			openModal,
+			closeModal,
 		};
-	}, [appInfo, appMenu, keybinds, settings, setSettings, messages]);
+	}, [
+		appInfo,
+		appMenu,
+		keybinds,
+		settings,
+		setSettings,
+		messages,
+		modals,
+		openModal,
+		closeModal,
+	]);
 
 	return (
 		<GlobalContext.Provider value={value}>{children}</GlobalContext.Provider>

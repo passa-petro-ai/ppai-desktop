@@ -5,11 +5,11 @@
 @layer base {
 	:root  {
 		--background: 25 0% 95%;
-		--foreground: 25 0% 5%;
+		--foreground: 25 0% 10%;
 		--card: 25 0% 90%;
-		--card-foreground: 25 0% 10%;
+		--card-foreground: 25 0% 15%;
 		--popover: 25 0% 95%;
-		--popover-foreground: 25 95% 5%;
+		--popover-foreground: 25 95% 10%;
 		--primary: 25 100% 50%;
 		--primary-foreground: 0 0% 100%;
 		--secondary: 25 10% 70%;
@@ -17,37 +17,37 @@
 		--muted: -13 10% 85%;
 		--muted-foreground: 25 0% 35%;
 		--accent: -13 10% 80%;
-		--accent-foreground: 25 0% 10%;
+		--accent-foreground: 25 0% 15%;
 		--destructive: 0 50% 30%;
 		--destructive-foreground: 25 0% 90%;
 		--border: 25 20% 50%;
-		--input: 25 20% 18%;
+		--input: 25 20% 25%;
 		--ring: 25 100% 50%;
 		--radius: 0.5rem;
 	}
 	.dark  {
-		--background: 25 10% 5%;
+		--background: 25 10% 10%;
 		--foreground: 25 0% 90%;
-		--card: 25 0% 5%;
+		--card: 25 0% 10%;
 		--card-foreground: 25 0% 90%;
 		--popover: 25 10% 5%;
 		--popover-foreground: 25 0% 90%;
 		--primary: 25 100% 50%;
 		--primary-foreground: 0 0% 100%;
-		--secondary: 25 10% 10%;
+		--secondary: 25 10% 20%;
 		--secondary-foreground: 0 0% 100%;
-		--muted: -13 10% 15%;
+		--muted: -13 10% 25%;
 		--muted-foreground: 25 0% 60%;
-		--accent: -13 10% 15%;
+		--accent: -13 10% 25%;
 		--accent-foreground: 25 0% 90%;
 		--destructive: 0 50% 30%;
 		--destructive-foreground: 25 0% 90%;
-		--border: 25 20% 18%;
-		--input: 25 20% 18%;
+		--border: 25 20% 25%;
+		--input: 25 20% 25%;
 		--ring: 25 100% 50%;
 		--radius: 0.5rem;
 	}
-
+	
 	* {
 		@apply border-border;
 		/*
@@ -90,4 +90,13 @@
 	.no-drag {
 		-webkit-app-region: no-drag;
 	}
+}
+
+.fadeIn {
+  animation: fadeInAnimation 2s;
+}
+
+@keyframes fadeInAnimation {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }

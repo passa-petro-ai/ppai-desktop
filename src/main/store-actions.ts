@@ -112,3 +112,39 @@ export const getAppMessages = () => {
 	const reversed = messages.slice().reverse();
 	return reversed;
 };
+
+export const openModal = (key: string) => {
+	const openModals = store.get('modals');
+	const isModalOpen = openModals?.includes(key);
+
+	if (isModalOpen) return;
+	openModals.push(key);
+
+	store.set(`modals`, openModals);
+	// console.log({ openModals });
+	synchronizeApp();
+};
+
+export const closeModal = (key: string) => {
+	let openModals = store.get('modals');
+	const isModalOpen = openModals?.includes(key);
+
+	if (!isModalOpen) return;
+
+	openModals = openModals.filter((modal) => modal !== key);
+
+	store.set('modals', openModals);
+	// console.log({ openModals });
+	synchronizeApp();
+};
+
+export const getOpenModal = (key: string) => {
+	const openModals = store.get('modals');
+	const isModalOpen = openModals?.includes(key);
+	return isModalOpen;
+};
+
+export const getOpenModals = () => {
+	const openModals = store.get('modals');
+	return openModals;
+};

@@ -178,12 +178,12 @@ export function Menu({ className }: { className?: string }) {
 		<Menubar
 			className={cn(
 				'drag', // Allow the titlebar to be draggable, to reposition the window. Useful when using frameless windows.
-				'rounded-none border-b border-none px-4 w-full overflow-hidden text-ellipsis items-stretch',
+				'rounded-none border-b border-none w-full overflow-hidden text-ellipsis items-stretch',
 				app.isMac && 'pl-20',
 				className,
 			)}
 		>
-			<DragHandle />
+			{/* <DragHandle /> */}
 			{/* Hide the Menu Bar on Mac, as it is redundant */}
 			{(!app.isMac || app.isDev) &&
 				Array.isArray(appMenu) &&

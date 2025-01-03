@@ -2,16 +2,22 @@
 import { MainLayout } from '@/renderer/components/layout/MainLayout';
 import { Home } from '@/renderer/components/views/Home';
 import {
-    Route,
-    RouterProvider,
-    createHashRouter,
-    createRoutesFromElements,
+	Route,
+	RouterProvider,
+	createHashRouter,
+	createRoutesFromElements,
 } from 'react-router-dom';
 
 import SettingsLayout from '@/renderer/components/layout/SettingsLayout';
 import ErrorPage from '@/renderer/components/views/ErrorPage';
 import { settingsNavItems } from '@/renderer/config/nav';
 import '@/renderer/styles/globals.scss';
+
+import { ExistingProjectDialog } from '@/renderer/components/modals/ExistingProjectDialog';
+import { NewProjectDialog } from '@/renderer/components/modals/NewProjectDialog';
+import { GeometricRotationDialog } from '../../modals/GeometricRotationDialog';
+import { GetRangeDialog } from '../../modals/GetRangeDialog';
+import { CsgtFourierTransformDialog } from '../../modals/CsgtFourierTransform';
 
 export default function App() {
 	const index =
@@ -48,6 +54,11 @@ export default function App() {
 	return (
 		<>
 			<RouterProvider router={router} />
+			<ExistingProjectDialog />
+			<NewProjectDialog />
+			<GeometricRotationDialog />
+			<GetRangeDialog />
+			<CsgtFourierTransformDialog />
 		</>
 	);
 }

@@ -13,6 +13,9 @@ import {
 	getKeybinds,
 	getSettings,
 	setSettings,
+	openModal,
+	closeModal,
+	getOpenModals,
 } from './store-actions';
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
@@ -46,6 +49,7 @@ export default {
 				keybinds: getKeybinds(),
 				messages: getAppMessages(),
 				appMenu: serializeMenu(Menu.getApplicationMenu()),
+				modals: getOpenModals(),
 			};
 		});
 
@@ -85,6 +89,14 @@ export default {
 		// Open a URL in the default browser
 		ipcMain.on(ipcChannels.OPEN_URL, (_event: any, url: string) => {
 			shell.openExternal(url);
+		});
+
+		ipcMain.on(ipcChannels.OPEN_MODAL_BY_ID, (_event: any, key: string) => {
+			openModal(key);
+		});
+
+		ipcMain.on(ipcChannels.CLOSE_MODAL_BY_ID, (_event: any, key: string) => {
+			closeModal(key);
 		});
 	},
 };

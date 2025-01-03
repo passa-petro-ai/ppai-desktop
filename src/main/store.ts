@@ -10,10 +10,15 @@ export type AppMessageType = string;
 
 export type AppMessageLogType = AppMessageType[];
 
+export type OpenModalsType = string;
+
+export type OpenModalsTrackerType = OpenModalsType[];
+
 export interface StoreType {
 	settings: SettingsType;
 	appMessageLog: AppMessageLogType; // Public-facing console.log()
 	keybinds: CustomAcceleratorsType; // Custom keybinds/accelerators/global shortcuts
+	modals: OpenModalsTrackerType;
 }
 
 const schema: Store.Schema<StoreType> = {
@@ -67,6 +72,10 @@ const schema: Store.Schema<StoreType> = {
 			},
 		},
 		default: DEFAULT_SETTINGS,
+	},
+	modals: {
+		type: 'array',
+		default: [],
 	},
 };
 

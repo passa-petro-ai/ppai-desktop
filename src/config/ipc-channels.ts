@@ -21,6 +21,10 @@ const RENDERER_READY = 'renderer-ready';
 const TRIGGER_APP_MENU_ITEM_BY_ID = 'trigger-app-menu-item-by-id';
 const OPEN_URL = 'open-url';
 
+const OPEN_MODAL_BY_ID = 'open-modal';
+const CLOSE_MODAL_BY_ID = 'close-modal';
+const CLOSE_MODALS = 'close-modals';
+
 export const ipcChannels = {
 	// main -> renderer
 	APP_NOTIFICATION,
@@ -39,4 +43,8 @@ export const ipcChannels = {
 
 	TRIGGER_APP_MENU_ITEM_BY_ID,
 	OPEN_URL,
+
+	OPEN_MODAL_BY_ID,
+	CLOSE_MODAL_BY_ID,
+	CLOSE_MODALS,
 };

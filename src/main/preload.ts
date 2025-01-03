@@ -54,6 +54,12 @@ const electronHandler = {
 			ipcRenderer.removeAllListeners(channel);
 		},
 	},
+	openModal(key: string) {
+		ipcRenderer.send(ipcChannels.OPEN_MODAL_BY_ID, key);
+	},
+	closeModal(key: string) {
+		ipcRenderer.send(ipcChannels.CLOSE_MODAL_BY_ID, key);
+	},
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

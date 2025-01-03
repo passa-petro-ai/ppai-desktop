@@ -52,7 +52,7 @@ const createWindow = (opts?: BrowserWindowConstructorOptions) => {
 
 		// Don't set icon on Windows so the exe's ico will be used as window and
 		// taskbar's icon. See https://github.com/atom/atom/issues/4811 for more.
-		...(is.linux ? { icon: getAssetPath('icon.png') } : {}),
+		// ...(is.linux ? { icon: getAssetPath('icon.png') } : {}),
 		...opts,
 	};
 
