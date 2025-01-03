@@ -91,7 +91,7 @@ export const ready = async () => {
 
 export const idle = async () => {
 	sounds.play('STARTUP');
-	windows.childWindow = await createChildWindow();
+	// windows.childWindow = await createChildWindow();
 
 	// ... do something with your app
 

@@ -2,17 +2,23 @@ import { SettingsJson } from '@/renderer/components/views/settings/SettingsJson'
 import { SettingsAbout } from '@/renderer/components/views/settings/about/SettingsAbout';
 import { SettingsAppearance } from '@/renderer/components/views/settings/appearance/SettingsAppearance';
 import {
-    BellIcon,
-    BlendingModeIcon,
-    GearIcon,
-    IdCardIcon,
-    ImageIcon,
-    KeyboardIcon,
+	BellIcon,
+	BlendingModeIcon,
+	GearIcon,
+	IdCardIcon,
+	ImageIcon,
+	KeyboardIcon,
+	ViewGridIcon,
+	TargetIcon,
+	BarChartIcon,
+	MixerHorizontalIcon,
 } from '@radix-ui/react-icons';
 
 import { SettingsApplication } from '@/renderer/components/views/settings/general/SettingsApplication';
 import { SettingsKeyboard } from '@/renderer/components/views/settings/keyboard/SettingsKeyboard';
 import { SettingsNotifications } from '@/renderer/components/views/settings/notifications/SettingsNotifications';
+import { FwiDomain } from '@/renderer/components/views/fullWaveFormInversion/domain/FwiDomain';
+import { FwiFrequency } from '../components/views/fullWaveFormInversion/frequency/FwiFrequency';
 
 export const nav = {
 	home: {
@@ -22,6 +28,10 @@ export const nav = {
 	settings: {
 		title: 'Settings',
 		href: '/settings',
+	},
+	fwi: {
+		title: 'FWI',
+		href: '/fwi',
 	},
 };
 
@@ -63,5 +73,34 @@ export const settingsNavItems = [
 		href: 'about',
 		element: <SettingsAbout />,
 		icon: IdCardIcon,
+	},
+];
+
+export const fwiNavItems = [
+	{
+		title: 'Domain',
+		href: 'domain',
+		element: <FwiDomain />,
+		icon: ViewGridIcon,
+		index: true,
+	},
+	{
+		title: 'Operation',
+		href: 'operation',
+		element: <FwiFrequency />,
+		icon: TargetIcon,
+	},
+
+	{
+		title: 'Frequency',
+		href: 'frequency',
+		element: <FwiFrequency />,
+		icon: BarChartIcon,
+	},
+	{
+		title: 'Parallelization',
+		href: 'parallelization',
+		element: <FwiFrequency />,
+		icon: MixerHorizontalIcon,
 	},
 ];

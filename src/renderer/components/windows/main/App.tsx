@@ -10,7 +10,7 @@ import {
 
 import SettingsLayout from '@/renderer/components/layout/SettingsLayout';
 import ErrorPage from '@/renderer/components/views/ErrorPage';
-import { settingsNavItems } from '@/renderer/config/nav';
+import { settingsNavItems, fwiNavItems } from '@/renderer/config/nav';
 import '@/renderer/styles/globals.scss';
 
 import { ExistingProjectDialog } from '@/renderer/components/modals/ExistingProjectDialog';
@@ -18,13 +18,28 @@ import { NewProjectDialog } from '@/renderer/components/modals/NewProjectDialog'
 import { GeometricRotationDialog } from '@/renderer/components/modals/GeometricRotationDialog';
 import { GetRangeDialog } from '@/renderer/components/modals/GetRangeDialog';
 import { CsgtFourierTransformDialog } from '@/renderer/components/modals/CsgtFourierTransformDialog';
+import FwiLayout from '../../layout/FwiLayout';
 
 export default function App() {
-	const index =
+	const settingsIndex =
 		settingsNavItems.find((item) => item.index) || settingsNavItems[0];
+
+	const fwiIndex = fwiNavItems.find((item) => item.index) || fwiNavItems[0];
 
 	const routes = (
 		<Route path="/" element={<MainLayout />} errorElement={<ErrorPage />}>
+			<Route path="fwi" element={<FwiLayout />}>
+				{fwiNavItems.map((item) => {
+					console.log(window.location);
+					return (
+						<Route
+							key={item.title}
+							path={item.href}
+							element={<>{item.element}</>}
+						/>
+					);
+				})}
+			</Route>
 			<Route path="settings" element={<SettingsLayout />}>
 				{settingsNavItems.map((item) => {
 					/* Dynamically add routes for settings */
@@ -37,9 +52,14 @@ export default function App() {
 					);
 				})}
 
-				{index && (
+				{settingsIndex && (
 					<>
-						<Route index path="*" element={<>{index.element}</>} />
+						<Route index path="*" element={<>{settingsIndex.element}</>} />
+					</>
+				)}
+				{fwiIndex && (
+					<>
+						<Route index path="*" element={<>{fwiIndex.element}</>} />
 					</>
 				)}
 			</Route>

@@ -7,8 +7,10 @@ import {
 	CardTitle,
 } from '@/components/ui/card';
 import { useGlobalContext } from '@/renderer/context/global-context';
+import { nav } from '@/renderer/config/nav';
 import { NEW_PROJECT_DIALOG_KEY } from '../modals/NewProjectDialog';
 import { EXISTING_PROJECT_DIALOG_KEY } from '../modals/ExistingProjectDialog';
+import { Link } from 'react-router-dom';
 
 export function Home() {
 	const { openModal } = useGlobalContext();
@@ -25,11 +27,23 @@ export function Home() {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="grid gap-4 grid-cols-2">
-						<Button onClick={() => openModal(NEW_PROJECT_DIALOG_KEY)} className="w-full">New Project</Button>
-						<Button onClick={() => openModal(EXISTING_PROJECT_DIALOG_KEY)} variant="secondary" className="w-full">
+						<Button
+							onClick={() => openModal(NEW_PROJECT_DIALOG_KEY)}
+							className="w-full"
+						>
+							New Project
+						</Button>
+						<Button
+							onClick={() => openModal(EXISTING_PROJECT_DIALOG_KEY)}
+							variant="secondary"
+							className="w-full"
+						>
 							Existing Project
 						</Button>
 					</div>
+					<Link to={nav.fwi.href} className="block">
+						<Button className="w-full">Go to FWI</Button>
+					</Link>
 				</CardContent>
 			</Card>
 		</div>

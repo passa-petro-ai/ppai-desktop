@@ -148,3 +148,5 @@ export const getOpenModals = () => {
 	const openModals = store.get('modals');
 	return openModals;
 };
+
+export const redirect = (path: string) => {};

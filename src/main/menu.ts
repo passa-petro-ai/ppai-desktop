@@ -5,6 +5,7 @@ import {
 	app,
 	shell,
 } from 'electron';
+import path from 'path';
 import { bugs, homepage } from '../../package.json';
 
 import dock from './dock';
@@ -383,6 +384,10 @@ export default class MenuBuilder {
 					{
 						label: 'Full Waveform Inversion',
 						id: 'fullWaveformInversion',
+						click: () => {
+							const url = `http://localhost:1212/index.html#/fwi`;
+							this.mainWindow.loadURL(url);
+						},
 					},
 					{
 						label: 'Reverse Time Migration',
