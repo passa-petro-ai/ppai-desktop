@@ -41,9 +41,6 @@ export function Home() {
 							Existing Project
 						</Button>
 					</div>
-					<Link to={nav.fwi.href} className="block">
-						<Button className="w-full">Go to FWI</Button>
-					</Link>
 				</CardContent>
 			</Card>
 		</div>
