@@ -23,6 +23,44 @@ import { Card } from '@/components/ui/card';
 
 const FormSchema = z.object({
 	projectFile: z.string().trim().nonempty('Project file path is required.'),
+	csgfOutDirectory: z
+		.string()
+		.trim()
+		.nonempty('CSGF Out Directory is required.'),
+	geomDirectory: z.string().trim().nonempty('GEOM Directory is required.'),
+	imageDimensionFile: z
+		.string()
+		.trim()
+		.nonempty('Image Dimension File is required.'),
+	initialVpFile: z.string().trim().nonempty('Initial Vp File is required.'),
+	initialDensityFile: z
+		.string()
+		.trim()
+		.nonempty('Initial Density File is required.'),
+	numberOfSources: z
+		.number()
+		.nonnegative('Number of Sources must be a non-negative number.'),
+	minimumOffset: z
+		.number()
+		.nonnegative('Minimum offset must be a non-negative number.'),
+	maximumOffset: z
+		.number()
+		.nonnegative('Maximum offset must be a non-negative number.'),
+	minimumSx: z
+		.number()
+		.nonnegative('Minimum sx must be a non-negative number.'),
+	minimumSy: z
+		.number()
+		.nonnegative('Minimum sy must be a non-negative number.'),
+	maximumSx: z
+		.number()
+		.nonnegative('Maximum sx must be a non-negative number.'),
+	maximumSy: z
+		.number()
+		.nonnegative('Maximum sy must be a non-negative number.'),
+	numberOfReceivers: z
+		.number()
+		.nonnegative('Number of Receivers must be a non-negative number.'),
 });
 
 export function FwiDomain() {
@@ -30,6 +68,19 @@ export function FwiDomain() {
 		resolver: zodResolver(FormSchema),
 		defaultValues: {
 			projectFile: '',
+			csgfOutDirectory: '',
+			geomDirectory: '',
+			imageDimensionFile: '',
+			initialVpFile: '',
+			initialDensityFile: '',
+			numberOfSources: 0,
+			minimumOffset: 0,
+			maximumOffset: 0,
+			minimumSx: 0,
+			minimumSy: 0,
+			maximumSx: 0,
+			maximumSy: 0,
+			numberOfReceivers: 0,
 		},
 	});
 
@@ -75,7 +126,7 @@ export function FwiDomain() {
 								</FormLabel>
 								<div className="flex w-full max-w-sm items-center space-x-2">
 									<FormControl>
-										<Input placeholder="CSGF Out Directory" {...field} />
+										<Input placeholder="GEOM Directory" {...field} />
 									</FormControl>
 									<Button variant="secondary" className="col-span-1">
 										Find
@@ -318,15 +369,19 @@ export function FwiDomain() {
 						/>
 					</div>
 					<Separator />
-          <div className="grid grid-cols-2 items-center gap-4">
-          <Card className="w-full h-48"></Card>
-          <Card className="w-full h-48"></Card>
-          <Card className="w-full h-48"></Card>
-          <Card className="w-full h-48"></Card>
-          </div>
-        
+					<div className="grid grid-cols-2 items-center gap-4">
+						<Card className="w-full h-48" />
+						<Card className="w-full h-48" />
+						<Card className="w-full h-48" />
+						<Card className="w-full h-48" />
+					</div>
 				</form>
 			</Form>
+			<div className="z-10 sticky bottom-0 flex flex-row-reverse shrink-0 border-t bg-background items-center  py-4 justify-between text-muted-foreground select-none">
+				<Button onClick={() => form.handleSubmit(onSubmit)} type="button">
+					Save
+				</Button>
+			</div>
 		</div>
 	);
 }

@@ -18,7 +18,9 @@ import { SettingsApplication } from '@/renderer/components/views/settings/genera
 import { SettingsKeyboard } from '@/renderer/components/views/settings/keyboard/SettingsKeyboard';
 import { SettingsNotifications } from '@/renderer/components/views/settings/notifications/SettingsNotifications';
 import { FwiDomain } from '@/renderer/components/views/fullWaveFormInversion/domain/FwiDomain';
-import { FwiFrequency } from '../components/views/fullWaveFormInversion/frequency/FwiFrequency';
+import { FwiOperation } from '@/renderer/components/views/fullWaveFormInversion/operation/FwiOperation';
+import { FwiFrequency } from '@/renderer/components/views/fullWaveFormInversion/frequency/FwiFrequency';
+import { FwiParalellization } from '../components/views/fullWaveFormInversion/parallelization/FwiParallelization';
 
 export const nav = {
 	home: {
@@ -87,7 +89,7 @@ export const fwiNavItems = [
 	{
 		title: 'Operation',
 		href: 'operation',
-		element: <FwiFrequency />,
+		element: <FwiOperation />,
 		icon: TargetIcon,
 	},
 
@@ -100,7 +102,7 @@ export const fwiNavItems = [
 	{
 		title: 'Parallelization',
 		href: 'parallelization',
-		element: <FwiFrequency />,
+		element: <FwiParalellization />,
 		icon: MixerHorizontalIcon,
 	},
 ];

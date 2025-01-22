@@ -8,6 +8,7 @@ import store, { AppMessageType } from './store';
 import tray from './tray';
 import { forEachWindow } from './utils/window-utils';
 import windows from './windows';
+import { Project } from '@/types/project';
 
 const synchronizeApp = (changedSettings?: Partial<SettingsType>) => {
 	// Sync with main
@@ -121,7 +122,6 @@ export const openModal = (key: string) => {
 	openModals.push(key);
 
 	store.set(`modals`, openModals);
-	// console.log({ openModals });
 	synchronizeApp();
 };
 
@@ -149,4 +149,11 @@ export const getOpenModals = () => {
 	return openModals;
 };
 
-export const redirect = (path: string) => {};
+export const getProject = () => {
+	const project = store.get('project');
+	return project;
+};
+
+export const openProject = (project: Project) => {
+	store.set('project', project);
+};

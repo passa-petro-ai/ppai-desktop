@@ -18,7 +18,7 @@ const register = () => {
 				// allowServiceWorkers: true,
 				// secure: true,
 				// standard: true,
-				// supportFetchAPI: true,
+				supportFetchAPI: true,
 				// bypassCSP: true,
 			},
 		},

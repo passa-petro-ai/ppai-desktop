@@ -5,6 +5,7 @@ import {
 	DEFAULT_SETTINGS,
 	SettingsType,
 } from '../config/settings';
+import { Project } from '@/types/project';
 
 export type AppMessageType = string;
 
@@ -19,6 +20,7 @@ export interface StoreType {
 	appMessageLog: AppMessageLogType; // Public-facing console.log()
 	keybinds: CustomAcceleratorsType; // Custom keybinds/accelerators/global shortcuts
 	modals: OpenModalsTrackerType;
+	project: Project;
 }
 
 const schema: Store.Schema<StoreType> = {
@@ -72,6 +74,27 @@ const schema: Store.Schema<StoreType> = {
 			},
 		},
 		default: DEFAULT_SETTINGS,
+	},
+	project: {
+		type: 'object',
+		properties: {
+			name: {
+				type: 'string',
+			},
+			segyModelFile: {
+				type: 'string',
+			},
+			segyDataFile: {
+				type: 'string',
+			},
+			shotKeyword: {
+				type: 'string',
+			},
+			paths: {
+				type: 'array',
+				default: [],
+			},
+		},
 	},
 	modals: {
 		type: 'array',

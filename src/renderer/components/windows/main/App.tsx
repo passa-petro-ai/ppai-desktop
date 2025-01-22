@@ -25,12 +25,10 @@ export default function App() {
 		settingsNavItems.find((item) => item.index) || settingsNavItems[0];
 
 	const fwiIndex = fwiNavItems.find((item) => item.index) || fwiNavItems[0];
-
 	const routes = (
 		<Route path="/" element={<MainLayout />} errorElement={<ErrorPage />}>
 			<Route path="fwi" element={<FwiLayout />}>
 				{fwiNavItems.map((item) => {
-					console.log(window.location);
 					return (
 						<Route
 							key={item.title}

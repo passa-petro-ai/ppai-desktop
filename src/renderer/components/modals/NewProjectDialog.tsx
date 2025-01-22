@@ -15,7 +15,6 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -47,6 +46,22 @@ const FormSchema = z.object({
 export function NewProjectDialog() {
 	const { modals, openModal, closeModal } = useGlobalContext();
 
+	const handleCreateFileDirectory = (directory: string) => {
+		window.electron.createFileDirectory(directory);
+	};
+
+	const handleFindFileDirectory = async (directory: string) => {
+		const isExisting: boolean = await window.electron
+			.findFileDirectory(directory)
+			.then((result) => result)
+			.catch(() => false);
+		return isExisting;
+	};
+
+	const handleCreateFile = (directory: string, content: any) => {
+		window.electron.createFile(directory, content);
+	};
+
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
 		defaultValues: {
@@ -69,7 +84,61 @@ export function NewProjectDialog() {
 		}
 	};
 
-	const onSubmit = (data: z.infer<typeof FormSchema>) => {};
+	const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+		const isProjectExisting = await handleFindFileDirectory(data.name);
+
+		if (isProjectExisting) {
+			alert('Project with the same name already exists.');
+			return;
+		}
+
+		const paths = [
+			{
+				directory: 'project',
+				path: data.name,
+				paths: [
+					{
+						directory: 'data',
+						path: `${data.name}/data`,
+						paths: [
+							{
+								directory: 'geom',
+								path: `${data.name}/data/geom`,
+							},
+							{
+								directory: 'csgt',
+								path: `${data.name}/data/csgt`,
+							},
+						],
+					},
+					{
+						directory: 'model',
+						path: `${data.name}/model`,
+						paths: [],
+					},
+				],
+			},
+		];
+
+		handleCreateFileDirectory(data.name);
+		handleCreateFileDirectory(`${data.name}/data`);
+		handleCreateFileDirectory(`${data.name}/data/geom`);
+		handleCreateFileDirectory(`${data.name}/data/csgt`);
+		handleCreateFileDirectory(`${data.name}/model`);
+
+		handleCreateFile(
+			`${data.name}/${data.name}.ppai.json`,
+			JSON.stringify({
+				name: data.name,
+				segyDataFile: data.segyDataFile,
+				segyModelFile: data.segyModelFile,
+				shotKeyword: data.shotKeyword,
+				paths,
+			}),
+		);
+
+		toggleModal(false);
+	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={toggleModal}>
@@ -107,7 +176,9 @@ export function NewProjectDialog() {
 							render={({ field }) => (
 								<FormItem>
 									<div className="grid grid-cols-6 items-center gap-4">
-										<FormLabel className="text-right">SEGY Data File</FormLabel>
+										<FormLabel className="text-right">
+											SEGY Model File
+										</FormLabel>
 										<FormControl>
 											<Input
 												className="col-span-4"
@@ -174,8 +245,8 @@ export function NewProjectDialog() {
 					<Button
 						type="submit"
 						onClick={async () => {
-							await form.trigger();
-							form.handleSubmit(onSubmit);
+							const onInvalid = () => console.error('error');
+							form.handleSubmit(onSubmit, onInvalid)();
 						}}
 					>
 						Create

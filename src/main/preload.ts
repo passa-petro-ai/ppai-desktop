@@ -4,6 +4,7 @@ import { getOS } from '@/utils/getOS';
 import { NotificationOptions } from '@/types/notification';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
+import { fstat } from 'fs';
 
 const channels = Object.values(ipcChannels);
 
@@ -59,6 +60,15 @@ const electronHandler = {
 	},
 	closeModal(key: string) {
 		ipcRenderer.send(ipcChannels.CLOSE_MODAL_BY_ID, key);
+	},
+	createFileDirectory(directory: string) {
+		ipcRenderer.send(ipcChannels.CREATE_FILE_DIRECTORY, directory);
+	},
+	findFileDirectory(directory: string) {
+		return ipcRenderer.invoke(ipcChannels.FIND_FILE_DIRECTORY, directory);
+	},
+	createFile(directory: string, content: string) {
+		ipcRenderer.send(ipcChannels.CREATE_FILE, directory, content);
 	},
 };
 

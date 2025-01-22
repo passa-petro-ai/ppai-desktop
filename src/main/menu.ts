@@ -22,7 +22,7 @@ import {
 	openModal,
 	closeModal,
 } from './store-actions';
-import { is } from './util';
+import { is, resolveHashRoute, resolveHtmlPath } from './util';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
 	selector?: string;
@@ -385,8 +385,7 @@ export default class MenuBuilder {
 						label: 'Full Waveform Inversion',
 						id: 'fullWaveformInversion',
 						click: () => {
-							const url = `http://localhost:1212/index.html#/fwi`;
-							this.mainWindow.loadURL(url);
+							this.mainWindow.loadURL(resolveHashRoute('fwi/domain'));
 						},
 					},
 					{

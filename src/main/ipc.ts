@@ -1,4 +1,5 @@
 import { Menu, app, ipcMain, shell } from 'electron';
+import fs from 'fs';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -98,5 +99,26 @@ export default {
 		ipcMain.on(ipcChannels.CLOSE_MODAL_BY_ID, (_event: any, key: string) => {
 			closeModal(key);
 		});
+
+		ipcMain.on(
+			ipcChannels.CREATE_FILE_DIRECTORY,
+			(_event: any, directory: string) => {
+				fs.mkdirSync(directory);
+			},
+		);
+
+		ipcMain.handle(
+			ipcChannels.FIND_FILE_DIRECTORY,
+			(_event: any, directory: string) => {
+				return fs.existsSync(directory);
+			},
+		);
+
+		ipcMain.on(
+			ipcChannels.CREATE_FILE,
+			(_event: any, directory: string, content: any) => {
+				fs.writeFileSync(directory, content, 'utf8');
+			},
+		);
 	},
 };

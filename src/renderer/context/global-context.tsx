@@ -18,6 +18,7 @@ import { CustomAcceleratorsType } from '@/types/keyboard';
 import { MenuItemConstructorOptions } from 'electron/renderer';
 import { toast } from 'sonner';
 import { OpenModalsTrackerType } from '@/main/store';
+import { Project } from '@/types/project';
 
 interface GlobalContextType {
 	app: Partial<AppInfoType>;
@@ -30,6 +31,8 @@ interface GlobalContextType {
 	modals: OpenModalsTrackerType;
 	openModal: (key: string) => void;
 	closeModal: (key: string) => void;
+	project: Project | null;
+	setProject: (newProject: Partial<Project>) => void;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -43,6 +46,8 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	modals: [],
 	openModal: () => {},
 	closeModal: () => {},
+	project: null,
+	setProject: () => {},
 });
 
 export function GlobalContextProvider({

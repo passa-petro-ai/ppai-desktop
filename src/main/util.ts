@@ -31,6 +31,12 @@ export function resolveHtmlPath(htmlFileName: string) {
 	return `file://${path.resolve(__dirname, '../renderer/', htmlFileName)}`;
 }
 
+export function resolveHashRoute(route: string) {
+	const base = resolveHtmlPath('index.html');
+	const url = new URL(`${base}/#${route}`);
+	return url.href;
+}
+
 export const debugInfo = () =>
 	`
   ${app.getName()} ${app.getVersion()}

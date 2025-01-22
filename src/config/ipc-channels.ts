@@ -25,6 +25,10 @@ const OPEN_MODAL_BY_ID = 'open-modal';
 const CLOSE_MODAL_BY_ID = 'close-modal';
 const CLOSE_MODALS = 'close-modals';
 
+const CREATE_FILE_DIRECTORY = 'create-file-directory';
+const FIND_FILE_DIRECTORY = 'find-file-directory';
+const CREATE_FILE = 'create-file';
+
 export const ipcChannels = {
 	// main -> renderer
 	APP_NOTIFICATION,
@@ -47,4 +51,8 @@ export const ipcChannels = {
 	OPEN_MODAL_BY_ID,
 	CLOSE_MODAL_BY_ID,
 	CLOSE_MODALS,
+
+	CREATE_FILE_DIRECTORY,
+	FIND_FILE_DIRECTORY,
+	CREATE_FILE,
 };
