@@ -1,5 +1,6 @@
 import { Menu, app, ipcMain, shell } from 'electron';
 import fs from 'fs';
+import { Project } from '@/types/project';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -17,6 +18,8 @@ import {
 	openModal,
 	closeModal,
 	getOpenModals,
+	getProject,
+	setProject,
 } from './store-actions';
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
@@ -51,6 +54,7 @@ export default {
 				messages: getAppMessages(),
 				appMenu: serializeMenu(Menu.getApplicationMenu()),
 				modals: getOpenModals(),
+				project: getProject(),
 			};
 		});
 
@@ -120,5 +124,9 @@ export default {
 				fs.writeFileSync(directory, content, 'utf8');
 			},
 		);
+
+		ipcMain.on(ipcChannels.SET_PROJECT, (_event: any, project: Project) => {
+			setProject(project);
+		});
 	},
 };

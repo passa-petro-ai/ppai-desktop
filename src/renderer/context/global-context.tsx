@@ -33,6 +33,7 @@ interface GlobalContextType {
 	closeModal: (key: string) => void;
 	project: Project | null;
 	setProject: (newProject: Partial<Project>) => void;
+	getProject: () => void;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -48,6 +49,7 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	closeModal: () => {},
 	project: null,
 	setProject: () => {},
+	getProject: () => {},
 });
 
 export function GlobalContextProvider({
@@ -68,31 +70,33 @@ export function GlobalContextProvider({
 		React.useState<CustomAcceleratorsType>(DEFAULT_KEYBINDS);
 
 	const [modals, setCurrentModals] = React.useState<OpenModalsTrackerType>([]);
+	const [project, setCurrentProject] = React.useState<Project | null>(null);
 
 	useEffect(() => {
 		// Create handler for receiving asynchronous messages from the main process
 		const synchronizeAppState = async () => {
 			console.log(ipcChannels.APP_UPDATED);
 
-
-
 			window.electron.ipcRenderer
 				.invoke(ipcChannels.GET_RENDERER_SYNC)
 				.then((res) => {
-					console.log({ res });
 					const {
 						settings: s,
 						keybinds: k,
 						messages: m,
 						appMenu: menu,
 						modals: d,
+						project: p,
 					} = res;
+
+					console.log({ res });
 
 					setCurrentSettings(s);
 					setCurrentKeybinds(k);
 					setMessages(m);
 					setAppMenu(menu);
 					setCurrentModals(d);
+					setCurrentProject(p);
 				})
 				.catch(console.error);
 		};
@@ -171,6 +175,10 @@ export function GlobalContextProvider({
 		window.electron.closeModal(key);
 	}, []);
 
+	const setProject = useCallback((newProject: Partial<Project>) => {
+		window.electron.setProject(newProject);
+	}, []);
+
 	const value = useMemo(() => {
 		return {
 			app: appInfo,
@@ -183,6 +191,8 @@ export function GlobalContextProvider({
 			modals,
 			openModal,
 			closeModal,
+			project,
+			setProject,
 		};
 	}, [
 		appInfo,
@@ -194,6 +204,8 @@ export function GlobalContextProvider({
 		modals,
 		openModal,
 		closeModal,
+		project,
+		setProject,
 	]);
 
 	return (

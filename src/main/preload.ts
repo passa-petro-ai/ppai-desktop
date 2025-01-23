@@ -5,6 +5,7 @@ import { NotificationOptions } from '@/types/notification';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { fstat } from 'fs';
+import { Project } from '@/types/project';
 
 const channels = Object.values(ipcChannels);
 
@@ -69,6 +70,9 @@ const electronHandler = {
 	},
 	createFile(directory: string, content: string) {
 		ipcRenderer.send(ipcChannels.CREATE_FILE, directory, content);
+	},
+	setProject(settings: Partial<Project>) {
+		ipcRenderer.send(ipcChannels.SET_PROJECT, settings);
 	},
 };
 

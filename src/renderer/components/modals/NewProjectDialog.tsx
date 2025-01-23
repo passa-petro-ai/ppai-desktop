@@ -33,6 +33,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import { Project } from '@/types/project';
 
 export const NEW_PROJECT_DIALOG_KEY = 'NewProjectDialog';
 
@@ -44,7 +45,7 @@ const FormSchema = z.object({
 });
 
 export function NewProjectDialog() {
-	const { modals, openModal, closeModal } = useGlobalContext();
+	const { modals, openModal, closeModal, setProject } = useGlobalContext();
 
 	const handleCreateFileDirectory = (directory: string) => {
 		window.electron.createFileDirectory(directory);
@@ -126,16 +127,20 @@ export function NewProjectDialog() {
 		handleCreateFileDirectory(`${data.name}/data/csgt`);
 		handleCreateFileDirectory(`${data.name}/model`);
 
+		const newProject = {
+			name: data.name,
+			segyDataFile: data.segyDataFile,
+			segyModelFile: data.segyModelFile,
+			shotKeyword: data.shotKeyword,
+			paths,
+		};
+
 		handleCreateFile(
 			`${data.name}/${data.name}.ppai.json`,
-			JSON.stringify({
-				name: data.name,
-				segyDataFile: data.segyDataFile,
-				segyModelFile: data.segyModelFile,
-				shotKeyword: data.shotKeyword,
-				paths,
-			}),
+			JSON.stringify(newProject),
 		);
+
+		setProject(newProject);
 
 		toggleModal(false);
 	};

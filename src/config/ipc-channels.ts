@@ -29,6 +29,8 @@ const CREATE_FILE_DIRECTORY = 'create-file-directory';
 const FIND_FILE_DIRECTORY = 'find-file-directory';
 const CREATE_FILE = 'create-file';
 
+const SET_PROJECT = 'set-project';
+
 export const ipcChannels = {
 	// main -> renderer
 	APP_NOTIFICATION,
@@ -55,4 +57,6 @@ export const ipcChannels = {
 	CREATE_FILE_DIRECTORY,
 	FIND_FILE_DIRECTORY,
 	CREATE_FILE,
+
+	SET_PROJECT,
 };

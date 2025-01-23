@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import Logger from 'electron-log';
+import { Project } from '@/types/project';
 import { APP_MESSAGES_MAX } from '../config/config';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
@@ -8,7 +9,6 @@ import store, { AppMessageType } from './store';
 import tray from './tray';
 import { forEachWindow } from './utils/window-utils';
 import windows from './windows';
-import { Project } from '@/types/project';
 
 const synchronizeApp = (changedSettings?: Partial<SettingsType>) => {
 	// Sync with main
@@ -154,6 +154,6 @@ export const getProject = () => {
 	return project;
 };
 
-export const openProject = (project: Project) => {
+export const setProject = (project: Project) => {
 	store.set('project', project);
 };
