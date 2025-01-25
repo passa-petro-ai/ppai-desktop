@@ -1,7 +1,7 @@
 {
 	"name": "ppai-desktop",
 	"productName": "PPAI Desktop",
-	"appId": "com.passa-petro-ai.hotplate",
+	"appId": "com.passa-petro-ai.desktop",
 	"version": "0.0.1-dev",
 	"description": "A batteries-included Electron boilerplate.",
 	"license": "CC-BY-NC-SA-4.0",
@@ -104,6 +104,7 @@
 	"dependencies": {
 		"@aptabase/electron": "^0.3.1",
 		"@electron/notarize": "^2.5.0",
+		"@electron/remote": "^2.1.2",
 		"@mapbox/react-colorpickr": "^10.3.0",
 		"@radix-ui/react-accordion": "^1.2.0",
 		"@radix-ui/react-alert-dialog": "^1.1.1",
@@ -229,7 +230,7 @@
 	},
 	"build": {
 		"productName": "PPAI Desktop",
-		"appId": "com.passa-petro-ai.hotplate",
+		"appId": "com.passa-petro-ai.desktop",
 		"asar": true,
 		"asarUnpack": "**\\*.{node,dll}",
 		"files": [

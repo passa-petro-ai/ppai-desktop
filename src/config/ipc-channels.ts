@@ -25,9 +25,13 @@ const OPEN_MODAL_BY_ID = 'open-modal';
 const CLOSE_MODAL_BY_ID = 'close-modal';
 const CLOSE_MODALS = 'close-modals';
 
+const CHECK_FILE_DIRECTORY = 'check-file-directory';
 const CREATE_FILE_DIRECTORY = 'create-file-directory';
 const FIND_FILE_DIRECTORY = 'find-file-directory';
+
 const CREATE_FILE = 'create-file';
+const FIND_FILE = 'find-file';
+const READ_FILE = 'read-file';
 
 const SET_PROJECT = 'set-project';
 
@@ -54,9 +58,13 @@ export const ipcChannels = {
 	CLOSE_MODAL_BY_ID,
 	CLOSE_MODALS,
 
+	CHECK_FILE_DIRECTORY,
 	CREATE_FILE_DIRECTORY,
 	FIND_FILE_DIRECTORY,
+
+	READ_FILE,
 	CREATE_FILE,
+	FIND_FILE,
 
 	SET_PROJECT,
 };

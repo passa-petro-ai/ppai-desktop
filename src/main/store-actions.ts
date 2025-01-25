@@ -157,3 +157,11 @@ export const getProject = () => {
 export const setProject = (project: Project) => {
 	store.set('project', project);
 };
+
+export const setFwiDomain = (fwiDomain: any) => {
+	store.set('fwiDomain', fwiDomain);
+};
+
+export const getFwiDomain = () => {
+	return store.get('fwiDomain');
+};

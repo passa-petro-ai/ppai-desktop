@@ -19,10 +19,10 @@ export function MainLayout({ children }: { children?: React.ReactNode }) {
 					{children || <Outlet />}
 				</div>
 			</div>
-			<Footer>
+			{/* <Footer>
 				<OnlineStatus />
 				<AppStatus />
-			</Footer>
+			</Footer> */}
 		</div>
 	);
 }

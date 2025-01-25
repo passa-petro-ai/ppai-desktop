@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Separator } from '@/components/ui/separator';
@@ -20,20 +20,66 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import {
+	Table,
+	TableCaption,
+	TableHeader,
+	TableRow,
+	TableHead,
+	TableBody,
+	TableCell,
+} from '@/components/ui/table';
 
 const FormSchema = z.object({
-	projectFile: z.string().trim().nonempty('Project file path is required.'),
+	csgfOutDirectory: z.string().url({ message: 'Invalid Path' }).trim(),
+	groups: z
+		.object({
+			start: z.number(),
+			end: z.number(),
+			increment: z.number(),
+		})
+		.array(),
 });
+
+const defaults = {
+	csgfOutDirectory: '',
+	groups: [],
+};
+
+const handleFindFileDirectroy = async () => {
+	return window.electron.findFileDirectory().then((result) => result);
+};
 
 export function FwiFrequency() {
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			projectFile: '',
-		},
+		defaultValues: defaults,
 	});
 
-	const onSubmit = (data: z.infer<typeof FormSchema>) => {};
+	const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
+		{
+			control: form.control, // control props comes from useForm (optional: if you are using FormProvider)
+			name: 'test', // unique name for your Field Array
+		},
+	);
+
+	const onFindFileDirectory = async (field: any) => {
+		const directory = await handleFindFileDirectroy();
+		const isCancelled = directory.canceled;
+
+		if (isCancelled) {
+			return;
+		}
+
+		if (directory?.filePaths?.length) {
+			const path = directory.filePaths[0];
+			form.setValue(field, path);
+		}
+	};
+
+	const onSubmit = (values: z.infer<typeof FormSchema>) => {
+		console.log(values);
+	};
 
 	return (
 		<div className="space-y-6">
@@ -43,7 +89,7 @@ export function FwiFrequency() {
 			</div>
 			<Separator />
 			<Form {...form}>
-				<form className="space-y-5">
+				<form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						control={form.control}
 						name="csgfOutDirectory"
@@ -56,7 +102,11 @@ export function FwiFrequency() {
 									<FormControl>
 										<Input placeholder="CSGF Out Directory" {...field} />
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
+									<Button
+										variant="secondary"
+										className="col-span-1"
+										onClick={() => onFindFileDirectory(field.name)}
+									>
 										Find
 									</Button>
 								</div>
@@ -65,266 +115,69 @@ export function FwiFrequency() {
 						)}
 					/>
 					<Separator className="my-6" />
+					{fields.map((field, index) => {
+						return (
+							<FormField
+								control={form.control}
+								name="groups"
+								render={({ field }) => {
+									return (
+										<FormItem>
+											<FormLabel className="text-right col-span-1">
+												Group {index + 1}
+											</FormLabel>
+											<div className="flex w-full max-w-sm items-center space-x-2">
+												<FormControl>
+													<Input type="number" placeholder="Start" />
+												</FormControl>
+												<FormControl>
+													<Input type="number" placeholder="End" />
+												</FormControl>
+												<FormControl>
+													<Input type="number" placeholder="Increment" />
+												</FormControl>
+												<Button variant="destructive">Remove</Button>
+											</div>
+											<FormMessage />
+										</FormItem>
+									);
+								}}
+							/>
+						);
+					})}
 					<FormField
 						control={form.control}
-						name="geomDirectory"
+						name="groups"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel className="text-right col-span-1">
-									GEOM Directory
-								</FormLabel>
+								<FormLabel className="text-right col-span-1">Group</FormLabel>
 								<div className="flex w-full max-w-sm items-center space-x-2">
 									<FormControl>
-										<Input placeholder="GEOM Directory" {...field} />
+										<Input type="number" placeholder="Start" />
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
-										Find
+									<FormControl>
+										<Input type="number" placeholder="End" />
+									</FormControl>
+									<FormControl>
+										<Input type="number" placeholder="Increment" />
+									</FormControl>
+									<Button
+										onClick={() =>
+											append({
+												start: 0,
+												end: 0,
+												increment: 0,
+											})
+										}
+									>
+										Add
 									</Button>
 								</div>
 								<FormMessage />
 							</FormItem>
 						)}
 					/>
-					<FormField
-						control={form.control}
-						name="imageDimensionFile"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className="text-right col-span-1">
-									Image Dimension File
-								</FormLabel>
-								<div className="flex w-full max-w-sm items-center space-x-2">
-									<FormControl>
-										<Input placeholder="Image Dimension File" {...field} />
-									</FormControl>
-									<Button variant="secondary" className="col-span-1">
-										Find
-									</Button>
-								</div>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="initialVpFile"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className="text-right col-span-1">
-									Initial VP File
-								</FormLabel>
-								<div className="flex w-full max-w-sm items-center space-x-2">
-									<FormControl>
-										<Input placeholder="Initial VP File" {...field} />
-									</FormControl>
-									<Button variant="secondary" className="col-span-1">
-										Find
-									</Button>
-								</div>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="initialVpFile"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel className="text-right col-span-1">
-									Initial Density File
-								</FormLabel>
-								<div className="flex w-full max-w-sm items-center space-x-2">
-									<FormControl>
-										<Input placeholder="Initial Density File" {...field} />
-									</FormControl>
-									<Button variant="secondary" className="col-span-1">
-										Find
-									</Button>
-								</div>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<Separator />
-					<h4 className="text-md font-medium leading-none">Summary</h4>
-					<div className="grid grid-cols-2 items-center gap-4">
-						<FormField
-							control={form.control}
-							name="numberOfSources"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Number of Sources
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Number of Sources"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="numberOfReceivers"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Number of Receivers
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Number of Receivers"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="minimumSx"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Minimum sx (m)
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Minimum sx (m)"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="minimumSy"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Minimum sy (m)
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Minimum sy (m)"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="maximumSx"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Maximum sx (m)
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Minimum sx (m)"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="maximumSy"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Maximum sy (m)
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Maximum sy (m)"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="minimumOffset"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Minimum offset (m)
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Minimum offset (m)"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="maximumOffset"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel className="text-right col-span-1">
-										Maximum sy (m)
-									</FormLabel>
-									<div className="flex w-full max-w-sm items-center space-x-2">
-										<FormControl>
-											<Input
-												type="number"
-												placeholder="Maximum offset (m)"
-												{...field}
-											/>
-										</FormControl>
-									</div>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
-					<Separator />
-          <div className="grid grid-cols-2 items-center gap-4">
-          <Card className="w-full h-48"></Card>
-          <Card className="w-full h-48"></Card>
-          <Card className="w-full h-48"></Card>
-          <Card className="w-full h-48"></Card>
-          </div>
-        
+					<Button type="submit">Save</Button>
 				</form>
 			</Form>
 		</div>

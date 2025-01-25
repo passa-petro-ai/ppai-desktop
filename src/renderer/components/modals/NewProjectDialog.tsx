@@ -53,7 +53,7 @@ export function NewProjectDialog() {
 
 	const handleFindFileDirectory = async (directory: string) => {
 		const isExisting: boolean = await window.electron
-			.findFileDirectory(directory)
+			.checkFileDirectory(directory)
 			.then((result) => result)
 			.catch(() => false);
 		return isExisting;
@@ -93,10 +93,12 @@ export function NewProjectDialog() {
 			return;
 		}
 
+		const projectPath = `${data.name}/${data.name}.ppai.json`;
+
 		const paths = [
 			{
 				directory: 'project',
-				path: data.name,
+				path: projectPath,
 				paths: [
 					{
 						directory: 'data',
@@ -135,10 +137,9 @@ export function NewProjectDialog() {
 			paths,
 		};
 
-		handleCreateFile(
-			`${data.name}/${data.name}.ppai.json`,
-			JSON.stringify(newProject),
-		);
+		const projectData = JSON.stringify(newProject);
+
+		handleCreateFile(projectPath, projectData);
 
 		setProject(newProject);
 

@@ -10,7 +10,6 @@ import { useGlobalContext } from '@/renderer/context/global-context';
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
@@ -19,10 +18,11 @@ import {
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const FormSchema = z.object({
-	numberOfIterations: z.coerce.number().min(10),
+	numberOfIterations: z.coerce.number(),
 	numberOfIterationsPerFrequencyGroup: z.coerce.number(),
 	numberOfShotStride: z.coerce.number(),
 	maxVp: z.coerce.number(),
@@ -42,32 +42,91 @@ const FormSchema = z.object({
 	maxGaussianSmoothingFilterSizeInX: z.coerce.number(),
 });
 
+const defaults = {
+	numberOfIterations: 0,
+	numberOfIterationsPerFrequencyGroup: 0,
+	numberOfShotStride: 0,
+	maxVp: 0,
+	minVp: 0,
+	maxOffsetForSourceEstimation: 0,
+	minOffsetForSourceEstimation: 0,
+	maxOffsetForVpUpdate: 0,
+	minOffsetForVpUpdate: 0,
+	updateStepLength: 0,
+	hessianWhiteningCoefficient: 0,
+	tikhonovRegularizationCoefficient: 0,
+	incrementOfGaussianSmoothingFilterSizeInZ: 0,
+	minGaussianSmoothingFilterSizeInZ: 0,
+	maxGaussianSmoothingFilterSizeInZ: 0,
+	incrementOfGaussianSmoothingFilterSizeInX: 0,
+	minGaussianSmoothingFilterSizeInX: 0,
+	maxGaussianSmoothingFilterSizeInX: 0,
+};
+
+const handleFindFile = async () => {
+	return window.electron.findFile().then((result) => result);
+};
+
+const handleFindFileDirectroy = async () => {
+	return window.electron.findFileDirectory().then((result) => result);
+};
+
+const handleReadFile = async (path: string) => {
+	const exists = await window.electron.checkFileDirectory(path);
+	if (!exists) return null;
+	return window.electron.readFile(path).then((result) => result);
+};
+
+const handleCreateFile = (directory: string, content: any) => {
+	window.electron.createFile(directory, content);
+};
+
 export function FwiOperation() {
+	const { project } = useGlobalContext();
+
+	const [operationValues, setOperationValues] = useState<
+		typeof defaults | null
+	>(null);
+
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			numberOfIterations: 0,
-			numberOfIterationsPerFrequencyGroup: 0,
-			numberOfShotStride: 0,
-			maxVp: 0,
-			minVp: 0,
-			maxOffsetForSourceEstimation: 0,
-			minOffsetForSourceEstimation: 0,
-			maxOffsetForVpUpdate: 0,
-			minOffsetForVpUpdate: 0,
-			updateStepLength: 0,
-			hessianWhiteningCoefficient: 0,
-			tikhonovRegularizationCoefficient: 0,
-			incrementOfGaussianSmoothingFilterSizeInZ: 0,
-			minGaussianSmoothingFilterSizeInZ: 0,
-			maxGaussianSmoothingFilterSizeInZ: 0,
-			incrementOfGaussianSmoothingFilterSizeInX: 0,
-			minGaussianSmoothingFilterSizeInX: 0,
-			maxGaussianSmoothingFilterSizeInX: 0,
-		},
+		defaultValues: operationValues || defaults,
 	});
 
-	const onSubmit = (data: z.infer<typeof FormSchema>) => {};
+	const setCurrentValues = async () => {
+		const file = await handleReadFile(`${project?.paths[0]?.path}/operation.json`);
+		if (file) {
+			setOperationValues(JSON.parse(file));
+		}
+		// console.log(form.getValues());
+	};
+
+	const onFindFile = async (field: any) => {
+		const file = await handleFindFile();
+		const isCancelled = file.canceled;
+
+		if (isCancelled) {
+			return;
+		}
+
+		if (file?.filePaths?.length) {
+			const path = file.filePaths[0];
+			form.setValue(field, path);
+		}
+	};
+
+	const onSubmit = (values: z.infer<typeof FormSchema>) => {
+		// console.log({ values });
+		const path = `${project?.paths[0]?.path}/operation.json`;
+		const content = JSON.stringify(values);
+		handleCreateFile(path, content);
+		toast.success('Saved');
+	};
+
+	useEffect(() => {
+		if (project && !operationValues) setCurrentValues();
+		form.reset(operationValues);
+	}, [project, operationValues]);
 
 	return (
 		<div className="space-y-6">
@@ -77,7 +136,7 @@ export function FwiOperation() {
 			</div>
 			<Separator />
 			<Form {...form}>
-				<form className="space-y-5">
+				<form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						control={form.control}
 						name="numberOfIterations"
@@ -167,7 +226,7 @@ export function FwiOperation() {
 					/>
 					<FormField
 						control={form.control}
-						name="maxVp"
+						name="minVp"
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel className="text-right col-span-1">
@@ -467,15 +526,9 @@ export function FwiOperation() {
 							</FormItem>
 						)}
 					/>
+					<Button type="submit">Save</Button>
 				</form>
 			</Form>
-			<div className="z-10 sticky bottom-0 flex flex-row-reverse shrink-0 border-t bg-background items-center  py-4 justify-between text-muted-foreground select-none">
-				<Button onClick={() => {
-					form.trigger();
-				}} type="button">
-					Save
-				</Button>
-			</div>
 		</div>
 	);
 }

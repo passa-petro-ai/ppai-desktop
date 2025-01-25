@@ -1,6 +1,7 @@
-import { Menu, app, ipcMain, shell } from 'electron';
+import { Menu, app, dialog, ipcMain, shell } from 'electron';
 import fs from 'fs';
 import { Project } from '@/types/project';
+import { execFile, spawn } from 'child_process';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -98,6 +99,9 @@ export default {
 
 		ipcMain.on(ipcChannels.OPEN_MODAL_BY_ID, (_event: any, key: string) => {
 			openModal(key);
+			spawn('cmd.exe', {
+				detached: true,
+			});
 		});
 
 		ipcMain.on(ipcChannels.CLOSE_MODAL_BY_ID, (_event: any, key: string) => {
@@ -112,7 +116,7 @@ export default {
 		);
 
 		ipcMain.handle(
-			ipcChannels.FIND_FILE_DIRECTORY,
+			ipcChannels.CHECK_FILE_DIRECTORY,
 			(_event: any, directory: string) => {
 				return fs.existsSync(directory);
 			},
@@ -125,8 +129,20 @@ export default {
 			},
 		);
 
+		ipcMain.handle(ipcChannels.READ_FILE, (_event: any, path: string) => {
+			return fs.readFileSync(path, 'utf8');
+		});
+
 		ipcMain.on(ipcChannels.SET_PROJECT, (_event: any, project: Project) => {
 			setProject(project);
+		});
+
+		ipcMain.handle(ipcChannels.FIND_FILE, (_event: any) => {
+			return dialog.showOpenDialog({ properties: ['openFile'] });
+		});
+
+		ipcMain.handle(ipcChannels.FIND_FILE_DIRECTORY, (_event: any) => {
+			return dialog.showOpenDialog({ properties: ['openDirectory'] });
 		});
 	},
 };

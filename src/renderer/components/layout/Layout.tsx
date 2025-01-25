@@ -10,7 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			<GlobalContextProvider>
 				<ThemeProvider>
 					{children}
-					<Toaster />
+					<Toaster position="bottom-right" richColors toastOptions={{}} />
 				</ThemeProvider>
 			</GlobalContextProvider>
 		</React.StrictMode>

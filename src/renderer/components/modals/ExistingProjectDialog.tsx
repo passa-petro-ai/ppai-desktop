@@ -28,12 +28,20 @@ import { useGlobalContext } from '@/renderer/context/global-context';
 
 export const EXISTING_PROJECT_DIALOG_KEY = 'ExistingProjectDialog';
 
+const handleFindFile = async () => {
+	return window.electron.findFile().then((result) => result);
+};
+
+const handleReadFile = async (path: string) => {
+	return window.electron.readFile(path).then((result) => result);
+};
+
 const FormSchema = z.object({
 	projectFile: z.string().trim().nonempty('Project file path is required.'),
 });
 
 export function ExistingProjectDialog() {
-	const { modals, openModal, closeModal } = useGlobalContext();
+	const { modals, openModal, closeModal, setProject } = useGlobalContext();
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
@@ -54,7 +62,25 @@ export function ExistingProjectDialog() {
 		}
 	};
 
-	const onSubmit = (data: z.infer<typeof FormSchema>) => {};
+	const onFindProjectFile = async () => {
+		const file = await handleFindFile();
+		if (file?.filePaths?.length) {
+			const path = file.filePaths[0];
+			form.setValue('projectFile', path);
+		}
+	};
+
+	const onOpenProjectFile = async () => {
+		const { projectFile } = form.getValues();
+		const raw = await handleReadFile(projectFile);
+		if (raw) {
+			const project = JSON.parse(raw);
+			setProject(project);
+			toggleModal(false);
+		}
+	};
+
+	const onSubmit = () => onOpenProjectFile();
 
 	return (
 		<Dialog open={isOpen} onOpenChange={toggleModal}>
@@ -76,7 +102,9 @@ export function ExistingProjectDialog() {
 										<FormControl>
 											<Input placeholder=".ppai" {...field} />
 										</FormControl>
-										<Button variant="secondary">Find</Button>
+										<Button variant="secondary" onClick={onFindProjectFile}>
+											Find
+										</Button>
 									</div>
 									<FormMessage />
 								</FormItem>
@@ -85,13 +113,7 @@ export function ExistingProjectDialog() {
 					</form>
 				</Form>
 				<DialogFooter>
-					<Button
-						type="submit"
-						onClick={async () => {
-							await form.trigger();
-							await form.handleSubmit(onSubmit);
-						}}
-					>
+					<Button type="submit" onClick={onSubmit}>
 						Open Project
 					</Button>
 				</DialogFooter>

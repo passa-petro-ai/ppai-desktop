@@ -19,71 +19,120 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useEffect, useState, useMemo } from 'react';
+import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 const FormSchema = z.object({
-	projectFile: z.string().trim().nonempty('Project file path is required.'),
-	csgfOutDirectory: z
-		.string()
-		.trim()
-		.nonempty('CSGF Out Directory is required.'),
-	geomDirectory: z.string().trim().nonempty('GEOM Directory is required.'),
-	imageDimensionFile: z
-		.string()
-		.trim()
-		.nonempty('Image Dimension File is required.'),
-	initialVpFile: z.string().trim().nonempty('Initial Vp File is required.'),
-	initialDensityFile: z
-		.string()
-		.trim()
-		.nonempty('Initial Density File is required.'),
-	numberOfSources: z
-		.number()
-		.nonnegative('Number of Sources must be a non-negative number.'),
-	minimumOffset: z
-		.number()
-		.nonnegative('Minimum offset must be a non-negative number.'),
-	maximumOffset: z
-		.number()
-		.nonnegative('Maximum offset must be a non-negative number.'),
-	minimumSx: z
-		.number()
-		.nonnegative('Minimum sx must be a non-negative number.'),
-	minimumSy: z
-		.number()
-		.nonnegative('Minimum sy must be a non-negative number.'),
-	maximumSx: z
-		.number()
-		.nonnegative('Maximum sx must be a non-negative number.'),
-	maximumSy: z
-		.number()
-		.nonnegative('Maximum sy must be a non-negative number.'),
-	numberOfReceivers: z
-		.number()
-		.nonnegative('Number of Receivers must be a non-negative number.'),
+	csgfOutDirectory: z.string().url({ message: 'Invalid Path' }).trim(),
+	geomDirectory: z.string().url({ message: 'Invalid Path' }).trim(),
+	imageDimensionFile: z.string().url({ message: 'Invalid Path' }).trim(),
+	initialVpFile: z.string().url({ message: 'Invalid Path' }).trim(),
+	initialDensityFile: z.string().url({ message: 'Invalid Path' }).trim(),
+	numberOfSources: z.coerce.number().nonnegative().optional(),
+	minimumOffset: z.coerce.number().nonnegative().optional(),
+	maximumOffset: z.coerce.number().nonnegative().optional(),
+	minimumSx: z.coerce.number().nonnegative().optional(),
+	minimumSy: z.coerce.number().nonnegative().optional(),
+	maximumSx: z.coerce.number().nonnegative().optional(),
+	maximumSy: z.coerce.number().nonnegative().optional(),
+	numberOfReceivers: z.coerce.number().nonnegative().optional(),
 });
 
+const defaults = {
+	csgfOutDirectory: '',
+	geomDirectory: '',
+	imageDimensionFile: '',
+	initialVpFile: '',
+	initialDensityFile: '',
+	numberOfSources: 0,
+	minimumOffset: 0,
+	maximumOffset: 0,
+	minimumSx: 0,
+	minimumSy: 0,
+	maximumSx: 0,
+	maximumSy: 0,
+	numberOfReceivers: 0,
+};
+
+const handleFindFile = async () => {
+	return window.electron.findFile().then((result) => result);
+};
+
+const handleFindFileDirectroy = async () => {
+	return window.electron.findFileDirectory().then((result) => result);
+};
+
+const handleReadFile = async (path: string) => {
+	const exists = await window.electron.checkFileDirectory(path);
+	if (!exists) return null;
+	return window.electron.readFile(path).then((result) => result);
+};
+
+const handleCreateFile = (directory: string, content: any) => {
+	window.electron.createFile(directory, content);
+};
+
 export function FwiDomain() {
+	const { project } = useGlobalContext();
+
+	const [domainValues, setDomainValues] = useState<typeof defaults | null>(
+		null,
+	);
+
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			projectFile: '',
-			csgfOutDirectory: '',
-			geomDirectory: '',
-			imageDimensionFile: '',
-			initialVpFile: '',
-			initialDensityFile: '',
-			numberOfSources: 0,
-			minimumOffset: 0,
-			maximumOffset: 0,
-			minimumSx: 0,
-			minimumSy: 0,
-			maximumSx: 0,
-			maximumSy: 0,
-			numberOfReceivers: 0,
-		},
+		defaultValues: domainValues || defaults,
 	});
 
-	const onSubmit = (data: z.infer<typeof FormSchema>) => {};
+	const setCurrentValues = async () => {
+		const file = await handleReadFile(`${project?.paths[0]?.path}/domain.json`);
+		if (file) {
+			setDomainValues(JSON.parse(file));
+		}
+		// console.log(form.getValues());
+	};
+
+	const onFindFile = async (field: any) => {
+		const file = await handleFindFile();
+		const isCancelled = file.canceled;
+
+		if (isCancelled) {
+			return;
+		}
+
+		if (file?.filePaths?.length) {
+			const path = file.filePaths[0];
+			form.setValue(field, path);
+		}
+	};
+
+	const onFindFileDirectory = async (field: any) => {
+		const directory = await handleFindFileDirectroy();
+		const isCancelled = directory.canceled;
+
+		if (isCancelled) {
+			return;
+		}
+
+		if (directory?.filePaths?.length) {
+			const path = directory.filePaths[0];
+			form.setValue(field, path);
+		}
+	};
+
+	const onSubmit = (values: z.infer<typeof FormSchema>) => {
+		// console.log({ values });
+		const path = `${project?.paths[0]?.path}/domain.json`;
+		const content = JSON.stringify(values);
+		handleCreateFile(path, content);
+		toast.success('Saved');
+	};
+
+	useEffect(() => {
+		if (project && !domainValues) setCurrentValues();
+		form.reset(domainValues);
+	}, [project, domainValues]);
 
 	return (
 		<div className="space-y-6">
@@ -93,7 +142,7 @@ export function FwiDomain() {
 			</div>
 			<Separator />
 			<Form {...form}>
-				<form className="space-y-5">
+				<form className="space-y-5" onSubmit={form.handleSubmit(onSubmit)}>
 					<FormField
 						control={form.control}
 						name="csgfOutDirectory"
@@ -104,9 +153,17 @@ export function FwiDomain() {
 								</FormLabel>
 								<div className="flex w-full max-w-sm items-center space-x-2">
 									<FormControl>
-										<Input placeholder="CSGF Out Directory" {...field} />
+										<Input
+											type="text"
+											placeholder="CSGF Out Directory"
+											{...field}
+										/>
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
+									<Button
+										variant="secondary"
+										className="col-span-1"
+										onClick={() => onFindFileDirectory('csgfOutDirectory')}
+									>
 										Find
 									</Button>
 								</div>
@@ -127,7 +184,11 @@ export function FwiDomain() {
 									<FormControl>
 										<Input placeholder="GEOM Directory" {...field} />
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
+									<Button
+										variant="secondary"
+										className="col-span-1"
+										onClick={() => onFindFileDirectory('geomDirectory')}
+									>
 										Find
 									</Button>
 								</div>
@@ -147,7 +208,11 @@ export function FwiDomain() {
 									<FormControl>
 										<Input placeholder="Image Dimension File" {...field} />
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
+									<Button
+										variant="secondary"
+										className="col-span-1"
+										onClick={() => onFindFile('imageDimensionFile')}
+									>
 										Find
 									</Button>
 								</div>
@@ -167,7 +232,11 @@ export function FwiDomain() {
 									<FormControl>
 										<Input placeholder="Initial VP File" {...field} />
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
+									<Button
+										variant="secondary"
+										className="col-span-1"
+										onClick={() => onFindFile('initialVpFile')}
+									>
 										Find
 									</Button>
 								</div>
@@ -177,7 +246,7 @@ export function FwiDomain() {
 					/>
 					<FormField
 						control={form.control}
-						name="initialVpFile"
+						name="initialDensityFile"
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel className="text-right col-span-1">
@@ -187,7 +256,11 @@ export function FwiDomain() {
 									<FormControl>
 										<Input placeholder="Initial Density File" {...field} />
 									</FormControl>
-									<Button variant="secondary" className="col-span-1">
+									<Button
+										variant="secondary"
+										className="col-span-1"
+										onClick={() => onFindFile('initialDensityFile')}
+									>
 										Find
 									</Button>
 								</div>
@@ -367,20 +440,16 @@ export function FwiDomain() {
 							)}
 						/>
 					</div>
-					<Separator />
+					{/* <Separator />
 					<div className="grid grid-cols-2 items-center gap-4">
 						<Card className="w-full h-48" />
 						<Card className="w-full h-48" />
 						<Card className="w-full h-48" />
 						<Card className="w-full h-48" />
-					</div>
+					</div> */}
+					<Button type="submit">Save</Button>
 				</form>
 			</Form>
-			<div className="z-10 sticky bottom-0 flex flex-row-reverse shrink-0 border-t bg-background items-center  py-4 justify-between text-muted-foreground select-none">
-				<Button onClick={() => form.handleSubmit(onSubmit)} type="button">
-					Save
-				</Button>
-			</div>
 		</div>
 	);
 }

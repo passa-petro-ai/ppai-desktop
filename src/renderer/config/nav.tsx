@@ -20,7 +20,7 @@ import { SettingsNotifications } from '@/renderer/components/views/settings/noti
 import { FwiDomain } from '@/renderer/components/views/fullWaveFormInversion/domain/FwiDomain';
 import { FwiOperation } from '@/renderer/components/views/fullWaveFormInversion/operation/FwiOperation';
 import { FwiFrequency } from '@/renderer/components/views/fullWaveFormInversion/frequency/FwiFrequency';
-import { FwiParalellization } from '../components/views/fullWaveFormInversion/parallelization/FwiParallelization';
+import { FwiParallelization } from '../components/views/fullWaveFormInversion/parallelization/FwiParallelization';
 
 export const nav = {
 	home: {
@@ -102,7 +102,7 @@ export const fwiNavItems = [
 	{
 		title: 'Parallelization',
 		href: 'parallelization',
-		element: <FwiParalellization />,
+		element: <FwiParallelization />,
 		icon: MixerHorizontalIcon,
 	},
 ];

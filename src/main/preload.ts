@@ -2,10 +2,9 @@ import { $errors } from '@/config/strings';
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { getOS } from '@/utils/getOS';
 import { NotificationOptions } from '@/types/notification';
+import { Project } from '@/types/project';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
-import { fstat } from 'fs';
-import { Project } from '@/types/project';
 
 const channels = Object.values(ipcChannels);
 
@@ -65,14 +64,23 @@ const electronHandler = {
 	createFileDirectory(directory: string) {
 		ipcRenderer.send(ipcChannels.CREATE_FILE_DIRECTORY, directory);
 	},
-	findFileDirectory(directory: string) {
-		return ipcRenderer.invoke(ipcChannels.FIND_FILE_DIRECTORY, directory);
+	checkFileDirectory(directory: string) {
+		return ipcRenderer.invoke(ipcChannels.CHECK_FILE_DIRECTORY, directory);
 	},
 	createFile(directory: string, content: string) {
 		ipcRenderer.send(ipcChannels.CREATE_FILE, directory, content);
 	},
+	readFile(path: string) {
+		return ipcRenderer.invoke(ipcChannels.READ_FILE, path);
+	},
 	setProject(settings: Partial<Project>) {
 		ipcRenderer.send(ipcChannels.SET_PROJECT, settings);
+	},
+	findFile() {
+		return ipcRenderer.invoke(ipcChannels.FIND_FILE);
+	},
+	findFileDirectory() {
+		return ipcRenderer.invoke(ipcChannels.FIND_FILE_DIRECTORY);
 	},
 };
 
