@@ -1,11 +1,11 @@
 import { CustomAcceleratorsType } from '@/types/keyboard';
 import Store from 'electron-store';
+import { Project } from '@/types/project';
 import {
 	DEFAULT_KEYBINDS,
 	DEFAULT_SETTINGS,
 	SettingsType,
 } from '../config/settings';
-import { Project } from '@/types/project';
 
 export type AppMessageType = string;
 

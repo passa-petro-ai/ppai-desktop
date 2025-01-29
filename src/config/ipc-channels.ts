@@ -35,6 +35,8 @@ const READ_FILE = 'read-file';
 
 const SET_PROJECT = 'set-project';
 
+const TERMINAL_INTO = 'terminal-into';
+
 export const ipcChannels = {
 	// main -> renderer
 	APP_NOTIFICATION,
@@ -67,4 +69,6 @@ export const ipcChannels = {
 	FIND_FILE,
 
 	SET_PROJECT,
+
+	TERMINAL_INTO,
 };

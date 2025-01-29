@@ -1,0 +1,20 @@
+export type Operation = {
+	numberOfIterations: number;
+	numberOfIterationsPerFrequencyGroup: number;
+	numberOfShotStride: number;
+	maxVp: number;
+	minVp: number;
+	maxOffsetForSourceEstimation: number;
+	minOffsetForSourceEstimation: number;
+	maxOffsetForVpUpdate: number;
+	minOffsetForVpUpdate: number;
+	updateStepLength: number;
+	hessianWhiteningCoefficient: number;
+	tikhonovRegularizationCoefficient: number;
+	incrementOfGaussianSmoothingFilterSizeInZ: number;
+	minGaussianSmoothingFilterSizeInZ: number;
+	maxGaussianSmoothingFilterSizeInZ: number;
+	incrementOfGaussianSmoothingFilterSizeInX: number;
+	minGaussianSmoothingFilterSizeInX: number;
+	maxGaussianSmoothingFilterSizeInX: number;
+};

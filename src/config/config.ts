@@ -30,3 +30,5 @@ export const DEBOUNCE_DELAY = 800;
 // 	'wmv',
 // 	'mkv',
 // ];
+
+export const PROJECTS_DIRECTORY = 'Projects';

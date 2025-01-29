@@ -76,8 +76,8 @@ const electronHandler = {
 	setProject(settings: Partial<Project>) {
 		ipcRenderer.send(ipcChannels.SET_PROJECT, settings);
 	},
-	findFile() {
-		return ipcRenderer.invoke(ipcChannels.FIND_FILE);
+	findFile(extensions: string[] = []) {
+		return ipcRenderer.invoke(ipcChannels.FIND_FILE, extensions);
 	},
 	findFileDirectory() {
 		return ipcRenderer.invoke(ipcChannels.FIND_FILE_DIRECTORY);

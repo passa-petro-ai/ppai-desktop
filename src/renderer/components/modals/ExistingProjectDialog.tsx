@@ -15,26 +15,17 @@ import {
 import {
 	Form,
 	FormControl,
-	FormDescription,
 	FormField,
 	FormItem,
-	FormLabel,
 	FormMessage,
 } from '@/components/ui/form';
 
 import { Input } from '@/components/ui/input';
 
 import { useGlobalContext } from '@/renderer/context/global-context';
+import { findFile, readFile } from '@/main/files';
 
 export const EXISTING_PROJECT_DIALOG_KEY = 'ExistingProjectDialog';
-
-const handleFindFile = async () => {
-	return window.electron.findFile().then((result) => result);
-};
-
-const handleReadFile = async (path: string) => {
-	return window.electron.readFile(path).then((result) => result);
-};
 
 const FormSchema = z.object({
 	projectFile: z.string().trim().nonempty('Project file path is required.'),
@@ -62,17 +53,23 @@ export function ExistingProjectDialog() {
 		}
 	};
 
-	const onFindProjectFile = async () => {
-		const file = await handleFindFile();
+	const onFindFile = async (field: any, extensions: string[] = []) => {
+		const file = await findFile(extensions);
+		const isCancelled = file.canceled;
+
+		if (isCancelled) {
+			return;
+		}
+
 		if (file?.filePaths?.length) {
 			const path = file.filePaths[0];
-			form.setValue('projectFile', path);
+			form.setValue(field, path);
 		}
 	};
 
 	const onOpenProjectFile = async () => {
 		const { projectFile } = form.getValues();
-		const raw = await handleReadFile(projectFile);
+		const raw = await readFile(projectFile);
 		if (raw) {
 			const project = JSON.parse(raw);
 			setProject(project);
@@ -102,7 +99,10 @@ export function ExistingProjectDialog() {
 										<FormControl>
 											<Input placeholder=".ppai" {...field} />
 										</FormControl>
-										<Button variant="secondary" onClick={onFindProjectFile}>
+										<Button
+											variant="secondary"
+											onClick={() => onFindFile(field.name, ['ppai.json'])}
+										>
 											Find
 										</Button>
 									</div>

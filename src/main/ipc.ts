@@ -1,7 +1,6 @@
 import { Menu, app, dialog, ipcMain, shell } from 'electron';
 import fs from 'fs';
 import { Project } from '@/types/project';
-import { execFile, spawn } from 'child_process';
 import { ipcChannels } from '../config/ipc-channels';
 import { SettingsType } from '../config/settings';
 import { CustomAcceleratorsType } from '../types/keyboard';
@@ -24,6 +23,8 @@ import {
 } from './store-actions';
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
+import windows from './windows';
+import * as pty from 'node-pty';
 
 export default {
 	initialize() {
@@ -99,9 +100,6 @@ export default {
 
 		ipcMain.on(ipcChannels.OPEN_MODAL_BY_ID, (_event: any, key: string) => {
 			openModal(key);
-			spawn('cmd.exe', {
-				detached: true,
-			});
 		});
 
 		ipcMain.on(ipcChannels.CLOSE_MODAL_BY_ID, (_event: any, key: string) => {
@@ -130,6 +128,8 @@ export default {
 		);
 
 		ipcMain.handle(ipcChannels.READ_FILE, (_event: any, path: string) => {
+			const isFileExisting = fs.existsSync(path);
+			if (!isFileExisting) return null;
 			return fs.readFileSync(path, 'utf8');
 		});
 
@@ -137,12 +137,47 @@ export default {
 			setProject(project);
 		});
 
-		ipcMain.handle(ipcChannels.FIND_FILE, (_event: any) => {
-			return dialog.showOpenDialog({ properties: ['openFile'] });
-		});
+		ipcMain.handle(
+			ipcChannels.FIND_FILE,
+			(_event: any, extensions: string[]) => {
+				const window = windows.mainWindow;
+				const filters = [{ name: 'All Files', extensions: ['*'] }];
+
+				if (extensions && extensions.length > 0)
+					filters.unshift({ name: 'File', extensions });
+
+				if (!window) throw new Error('Main window is not available');
+
+				return dialog.showOpenDialog(window, {
+					filters,
+					properties: ['openFile'],
+				});
+			},
+		);
 
 		ipcMain.handle(ipcChannels.FIND_FILE_DIRECTORY, (_event: any) => {
-			return dialog.showOpenDialog({ properties: ['openDirectory'] });
+			const window = windows.mainWindow;
+			if (!window) throw new Error('Main window is not available');
+
+			return dialog.showOpenDialog(window, { properties: ['openDirectory'] });
 		});
+
+		var os = getOS();
+		var nativeShell = os === "windows" ? "powershell.exe" : "bash";
+		var ptyProcess = pty.spawn(nativeShell, [], {
+						name: 'xterm-color',
+						cols: 80,
+						rows: 24,
+						cwd: process.env.HOME,
+						env: process.env
+				});
+    
+		ptyProcess.onData((data: any) => {
+			windows.mainWindow?.webContents.send("terminal-incData", data);
+		});
+
+    ipcMain.on("terminal-into", (event, data)=> {
+      ptyProcess.write(data);
+    })
 	},
 };

@@ -3,8 +3,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Separator } from '@/components/ui/separator';
-import { InputColor } from '@/renderer/components/input/InputColor';
-import { ThemeForm } from '@/renderer/components/views/settings/appearance/ThemeForm';
 import { useGlobalContext } from '@/renderer/context/global-context';
 
 import {
@@ -20,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Parallelization } from '@/types/fwi/parallelization';
+import { checkFileDirectory, createFile, readFile } from '@/main/files';
+import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 
 const FormSchema = z.object({
 	numberOfComputingNodes: z.coerce.number(),
@@ -28,75 +29,87 @@ const FormSchema = z.object({
 	numberOfCoresPerFrequencyGroup: z.coerce.number(),
 });
 
-const defaults = {
+const DEFAULTS: Parallelization = {
 	numberOfComputingNodes: 1,
 	numberOfCoresPerComputingNode: 1,
 	numberOfFrequencyGroupToSolveSimultaneously: 1,
 	numberOfCoresPerFrequencyGroup: 1,
 };
 
-const handleFindFile = async () => {
-	return window.electron.findFile().then((result) => result);
-};
-
-const handleFindFileDirectroy = async () => {
-	return window.electron.findFileDirectory().then((result) => result);
-};
-
-const handleReadFile = async (path: string) => {
-	return window.electron.readFile(path).then((result) => result);
-};
-
-const handleCreateFile = (directory: string, content: any) => {
-	window.electron.createFile(directory, content);
-};
+const FILE_NAME = 'parallelization.json';
 
 export function FwiParallelization() {
 	const { project } = useGlobalContext();
 
-	const [parallelizationValues, setParallelizationValues] = useState<
-		typeof defaults | null
-	>(null);
+	const [parallelizationValues, setParallelizationValues] =
+		useState<Parallelization>(DEFAULTS);
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: defaults || defaults,
+		defaultValues: DEFAULTS,
+		values: parallelizationValues,
 	});
 
-	const setCurrentValues = async () => {
-		const file = await handleReadFile(`${project?.paths[0]?.path}/domain.json`);
-		if (file) {
-			setParallelizationValues(JSON.parse(file));
-		}
-		// console.log(form.getValues());
-	};
-
-	const onFindFile = async (field: any) => {
-		const file = await handleFindFile();
-		const isCancelled = file.canceled;
-
-		if (isCancelled) {
+	const saveParallelizationValues = (values: Partial<Parallelization>) => {
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
 			return;
 		}
 
-		if (file?.filePaths?.length) {
-			const path = file.filePaths[0];
-			form.setValue(field, path);
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+		const content = JSON.stringify(values);
+
+		createFile(path, content);
+	};
+
+	const fetchParallelizationValues = async () => {
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
+		}
+
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+
+		const isExisting = await checkFileDirectory(path);
+		if (!isExisting) saveParallelizationValues(DEFAULTS);
+
+		const content: string = await readFile(path);
+
+		if (!content) {
+			toast.error('There was an error loading configuration file.');
+		}
+
+		try {
+			const values: Parallelization = JSON.parse(content);
+			return values;
+		} catch {
+			toast.error('The configuration file is possibly malformed.');
+			return null;
 		}
 	};
 
+	const loadParallelizationValues = async () => {
+		const values = await fetchParallelizationValues();
+		setParallelizationValues({
+			...DEFAULTS,
+			...values,
+		});
+	};
+
 	const onSubmit = (values: z.infer<typeof FormSchema>) => {
-		// console.log({ values });
-		const path = `${project?.paths[0]?.path}/parallelization.json`;
-		const content = JSON.stringify(values);
-		handleCreateFile(path, content);
+		saveParallelizationValues({
+			...DEFAULTS,
+			...values,
+		});
 		toast.success('Saved');
 	};
 
 	useEffect(() => {
-		if (project && !parallelizationValues) setCurrentValues();
-		form.reset(parallelizationValues);
-	}, [project, parallelizationValues]);
+		if (project) loadParallelizationValues();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [project]);
 
 	return (
 		<div className="space-y-6">

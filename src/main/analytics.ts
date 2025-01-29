@@ -9,8 +9,7 @@ const initialize = () => {
 	}
 
 	Logger.status($init.analytics);
-
-	aptabase('A-US-6138101850'); // 👈 this is where you enter your App Key
+	// aptabase('A-US-6138101850'); // 👈 this is where you enter your App Key
 };
 
 const track = (event: string, data?: any) => {

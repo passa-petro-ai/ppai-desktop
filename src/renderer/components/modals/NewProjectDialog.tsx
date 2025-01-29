@@ -33,35 +33,55 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
+import {
+	checkFileDirectory,
+	createFile,
+	createFileDirectory,
+	findFile,
+} from '@/main/files';
+import { toast } from 'sonner';
+import { PROJECTS_DIRECTORY } from '@/config/config';
 import { Project } from '@/types/project';
+import { refinePathValidator } from '@/utils/refinePathValidator';
 
 export const NEW_PROJECT_DIALOG_KEY = 'NewProjectDialog';
 
+const getBaseProjectPath = (name: string) => `${PROJECTS_DIRECTORY}/${name}`;
+
 const FormSchema = z.object({
-	name: z.string().trim().nonempty('Project file name is required.'),
-	segyDataFile: z.string().trim().nonempty('SEGY Data File is required.'),
-	segyModelFile: z.string().trim().nonempty('SEGY Model File is required.'),
+	name: z
+		.string()
+		.trim()
+		.nonempty('Project file name is required.')
+		.refine(
+			async (data) => {
+				const projectPath = getBaseProjectPath(data);
+				const isExisting = await checkFileDirectory(projectPath);
+				return !isExisting;
+			},
+			{
+				message: 'A project with the same name already exists.',
+			},
+		),
+	segyDataFile: z
+		.string()
+		.trim()
+		.nonempty('SEGY Data File is required.')
+		.refine(refinePathValidator, {
+			message: 'SEGY Data File could not be found.',
+		}),
+	segyModelFile: z
+		.string()
+		.trim()
+		.nonempty('SEGY Model File is required.')
+		.refine(refinePathValidator, {
+			message: 'SEGY Model File could not be found.',
+		}),
 	shotKeyword: z.string().trim().nonempty('Shot Keyword is required.'),
 });
 
 export function NewProjectDialog() {
 	const { modals, openModal, closeModal, setProject } = useGlobalContext();
-
-	const handleCreateFileDirectory = (directory: string) => {
-		window.electron.createFileDirectory(directory);
-	};
-
-	const handleFindFileDirectory = async (directory: string) => {
-		const isExisting: boolean = await window.electron
-			.checkFileDirectory(directory)
-			.then((result) => result)
-			.catch(() => false);
-		return isExisting;
-	};
-
-	const handleCreateFile = (directory: string, content: any) => {
-		window.electron.createFile(directory, content);
-	};
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
@@ -85,64 +105,108 @@ export function NewProjectDialog() {
 		}
 	};
 
-	const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-		const isProjectExisting = await handleFindFileDirectory(data.name);
+	const onFindFile = async (field: any, extensions: string[] = []) => {
+		const file = await findFile(extensions);
+		const isCancelled = file.canceled;
 
-		if (isProjectExisting) {
-			alert('Project with the same name already exists.');
+		if (isCancelled) {
 			return;
 		}
 
-		const projectPath = `${data.name}/${data.name}.ppai.json`;
+		if (file?.filePaths?.length) {
+			const path = file.filePaths[0];
+			form.setValue(field, path);
+		}
+	};
 
-		const paths = [
+	const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+		const baseProjectPath = getBaseProjectPath(data.name);
+		const isProjectExisting = await checkFileDirectory(baseProjectPath);
+
+		if (isProjectExisting) {
+			toast.error('A project with the same name already exists.');
+			return;
+		}
+
+		const projectFilePath = `${baseProjectPath}/${data.name}.ppai.json`;
+
+		type PathType = {
+			name: string;
+			path: string;
+			type: 'folder' | 'file';
+			paths?: PathType[];
+		};
+
+		const projectStructure: PathType[] = [
 			{
-				directory: 'project',
-				path: projectPath,
+				name: 'project',
+				path: baseProjectPath,
+				type: 'folder',
 				paths: [
 					{
-						directory: 'data',
-						path: `${data.name}/data`,
+						name: 'data',
+						path: `${baseProjectPath}/data`,
+						type: 'folder',
 						paths: [
 							{
-								directory: 'geom',
-								path: `${data.name}/data/geom`,
+								name: 'geom',
+								path: `${baseProjectPath}/data/geom`,
+								type: 'folder',
 							},
 							{
-								directory: 'csgt',
-								path: `${data.name}/data/csgt`,
+								name: 'csgt',
+								path: `${baseProjectPath}/data/csgt`,
+								type: 'folder',
 							},
 						],
 					},
 					{
-						directory: 'model',
-						path: `${data.name}/model`,
-						paths: [],
+						name: 'model',
+						path: `${baseProjectPath}/model`,
+						type: 'folder',
+					},
+					{
+						name: 'projectFile',
+						path: projectFilePath,
+						type: 'file',
 					},
 				],
 			},
 		];
 
-		handleCreateFileDirectory(data.name);
-		handleCreateFileDirectory(`${data.name}/data`);
-		handleCreateFileDirectory(`${data.name}/data/geom`);
-		handleCreateFileDirectory(`${data.name}/data/csgt`);
-		handleCreateFileDirectory(`${data.name}/model`);
-
-		const newProject = {
+		const newProject: Project = {
 			name: data.name,
 			segyDataFile: data.segyDataFile,
 			segyModelFile: data.segyModelFile,
 			shotKeyword: data.shotKeyword,
-			paths,
+			paths: projectStructure,
 		};
 
 		const projectData = JSON.stringify(newProject);
 
-		handleCreateFile(projectPath, projectData);
+		const setupProjectStructure = async (structure: PathType[]) => {
+			createFileDirectory(PROJECTS_DIRECTORY);
+			// eslint-disable-next-line no-restricted-syntax
+			for (const item of structure) {
+				switch (item.type) {
+					case 'folder':
+						// eslint-disable-next-line no-await-in-loop
+						await createFileDirectory(item.path);
+						break;
+					case 'file':
+					default:
+						// eslint-disable-next-line no-await-in-loop
+						await createFile(item.path, projectData);
+						break;
+				}
 
+				if (item.paths && item.paths.length > 0)
+					setupProjectStructure(item.paths);
+			}
+		};
+
+		setupProjectStructure(projectStructure);
 		setProject(newProject);
-
 		toggleModal(false);
 	};
 
@@ -192,7 +256,12 @@ export function NewProjectDialog() {
 												{...field}
 											/>
 										</FormControl>
-										<Button variant="secondary">Find</Button>
+										<Button
+											variant="secondary"
+											onClick={() => onFindFile(field.name, ['segy'])}
+										>
+											Find
+										</Button>
 									</div>
 									<FormMessage />
 								</FormItem>
@@ -212,7 +281,12 @@ export function NewProjectDialog() {
 												{...field}
 											/>
 										</FormControl>
-										<Button variant="secondary">Find</Button>
+										<Button
+											variant="secondary"
+											onClick={() => onFindFile(field.name, ['segy'])}
+										>
+											Find
+										</Button>
 									</div>
 									<FormMessage />
 								</FormItem>

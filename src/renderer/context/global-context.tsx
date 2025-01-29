@@ -33,7 +33,6 @@ interface GlobalContextType {
 	closeModal: (key: string) => void;
 	project: Project | null;
 	setProject: (newProject: Partial<Project>) => void;
-	getProject: () => void;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -49,7 +48,6 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	closeModal: () => {},
 	project: null,
 	setProject: () => {},
-	getProject: () => {},
 });
 
 export function GlobalContextProvider({
@@ -75,8 +73,6 @@ export function GlobalContextProvider({
 	useEffect(() => {
 		// Create handler for receiving asynchronous messages from the main process
 		const synchronizeAppState = async () => {
-			console.log(ipcChannels.APP_UPDATED);
-
 			window.electron.ipcRenderer
 				.invoke(ipcChannels.GET_RENDERER_SYNC)
 				.then((res) => {
@@ -88,8 +84,6 @@ export function GlobalContextProvider({
 						modals: d,
 						project: p,
 					} = res;
-
-					console.log({ res });
 
 					setCurrentSettings(s);
 					setCurrentKeybinds(k);
@@ -103,8 +97,6 @@ export function GlobalContextProvider({
 
 		// Listen for messages from the main process
 		window.electron.ipcRenderer.on(ipcChannels.APP_UPDATED, async (data) => {
-			console.log('APP_UPDATED', data);
-
 			await synchronizeAppState();
 		});
 

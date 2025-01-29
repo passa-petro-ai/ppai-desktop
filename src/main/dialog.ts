@@ -90,9 +90,50 @@ const openUpdateDialog = async (action: Function) => {
 		});
 };
 
+type OpenDialogPropsButton = {
+	text: string;
+	action: Function | null;
+};
+
+type OpenDialogProps = {
+	title: string;
+	message: string;
+	type: 'info' | 'none' | 'error' | 'question' | 'warning' | undefined;
+	okButton: OpenDialogPropsButton | null;
+	cancelButton: OpenDialogPropsButton | null;
+};
+
+export const openDialog = async (props: OpenDialogProps) => {
+	const { title, message, type, okButton, cancelButton } = props;
+
+	const buttons: string[] = [];
+
+	if (okButton != null) buttons.push(okButton.text);
+	if (cancelButton != null) buttons.push(cancelButton.text);
+
+	await electronDialog
+		.showMessageBox({
+			type,
+			title,
+			message: message ?? '',
+			buttons,
+		})
+		.then((result) => {
+			const buttonIndex = validButtonIndex(result);
+			if (
+				buttonIndex === 0 &&
+				okButton != null &&
+				typeof okButton.action === 'function'
+			) {
+				okButton.action();
+			}
+		});
+};
+
 export default {
 	// openMediaDialog,
 	openAboutDialog,
 	// openAlertDialog,
 	openUpdateDialog,
+	openDialog,
 };

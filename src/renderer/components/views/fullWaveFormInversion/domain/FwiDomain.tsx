@@ -3,8 +3,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Separator } from '@/components/ui/separator';
-import { InputColor } from '@/renderer/components/input/InputColor';
-import { ThemeForm } from '@/renderer/components/views/settings/appearance/ThemeForm';
 import { useGlobalContext } from '@/renderer/context/global-context';
 
 import {
@@ -18,17 +16,34 @@ import {
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useEffect, useState, useMemo } from 'react';
-import { Toaster } from '@/components/ui/sonner';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { refinePathValidator } from '@/utils/refinePathValidator';
+import {
+	createFile,
+	readFile,
+	findFile,
+	checkFileDirectory,
+} from '@/main/files';
+import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
+import { Domain } from '@/types/fwi/domain';
 
 const FormSchema = z.object({
-	csgfOutDirectory: z.string().url({ message: 'Invalid Path' }).trim(),
-	geomDirectory: z.string().url({ message: 'Invalid Path' }).trim(),
-	imageDimensionFile: z.string().url({ message: 'Invalid Path' }).trim(),
-	initialVpFile: z.string().url({ message: 'Invalid Path' }).trim(),
-	initialDensityFile: z.string().url({ message: 'Invalid Path' }).trim(),
+	csgfOutDirectory: z.string().trim().refine(refinePathValidator, {
+		message: 'Invalid Path',
+	}),
+	geomDirectory: z.string().trim().refine(refinePathValidator, {
+		message: 'Invalid Path',
+	}),
+	imageDimensionFile: z.string().trim().refine(refinePathValidator, {
+		message: 'Invalid Path',
+	}),
+	initialVpFile: z.string().trim().refine(refinePathValidator, {
+		message: 'Invalid Path',
+	}),
+	initialDensityFile: z.string().trim().refine(refinePathValidator, {
+		message: 'Invalid Path',
+	}),
 	numberOfSources: z.coerce.number().nonnegative().optional(),
 	minimumOffset: z.coerce.number().nonnegative().optional(),
 	maximumOffset: z.coerce.number().nonnegative().optional(),
@@ -39,7 +54,7 @@ const FormSchema = z.object({
 	numberOfReceivers: z.coerce.number().nonnegative().optional(),
 });
 
-const defaults = {
+const DEFAULTS: Domain = {
 	csgfOutDirectory: '',
 	geomDirectory: '',
 	imageDimensionFile: '',
@@ -55,46 +70,70 @@ const defaults = {
 	numberOfReceivers: 0,
 };
 
-const handleFindFile = async () => {
-	return window.electron.findFile().then((result) => result);
-};
-
-const handleFindFileDirectroy = async () => {
-	return window.electron.findFileDirectory().then((result) => result);
-};
-
-const handleReadFile = async (path: string) => {
-	const exists = await window.electron.checkFileDirectory(path);
-	if (!exists) return null;
-	return window.electron.readFile(path).then((result) => result);
-};
-
-const handleCreateFile = (directory: string, content: any) => {
-	window.electron.createFile(directory, content);
-};
+const FILE_NAME = 'domain.json';
 
 export function FwiDomain() {
 	const { project } = useGlobalContext();
 
-	const [domainValues, setDomainValues] = useState<typeof defaults | null>(
-		null,
-	);
+	const [domainValues, setDomainValues] = useState<Domain>(DEFAULTS);
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: domainValues || defaults,
+		defaultValues: DEFAULTS,
+		values: domainValues,
 	});
 
-	const setCurrentValues = async () => {
-		const file = await handleReadFile(`${project?.paths[0]?.path}/domain.json`);
-		if (file) {
-			setDomainValues(JSON.parse(file));
+	const saveDomainValues = async (values: typeof DEFAULTS) => {
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
 		}
-		// console.log(form.getValues());
+
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+		const content = JSON.stringify(values);
+
+		createFile(path, content);
+	};
+
+	const fetchDomainValues = async () => {
+		// console.log('Start Fetch');
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
+		}
+
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+
+		const isExisting = await checkFileDirectory(path);
+		if (!isExisting) saveDomainValues(DEFAULTS);
+
+		const content: string = await readFile(path);
+
+		if (!content) {
+			toast.error('There was an error loading configuration file.');
+		}
+
+		try {
+			const values: Domain = JSON.parse(content);
+			return values;
+		} catch {
+			toast.error('The configuration file is possibly malformed.');
+			return null;
+		}
+	};
+
+	const loadDomainValues = async () => {
+		const values = await fetchDomainValues();
+		setDomainValues({
+			...DEFAULTS,
+			...values,
+		});
 	};
 
 	const onFindFile = async (field: any) => {
-		const file = await handleFindFile();
+		const file = await findFile();
 		const isCancelled = file.canceled;
 
 		if (isCancelled) {
@@ -108,7 +147,7 @@ export function FwiDomain() {
 	};
 
 	const onFindFileDirectory = async (field: any) => {
-		const directory = await handleFindFileDirectroy();
+		const directory = await findFile();
 		const isCancelled = directory.canceled;
 
 		if (isCancelled) {
@@ -121,18 +160,19 @@ export function FwiDomain() {
 		}
 	};
 
-	const onSubmit = (values: z.infer<typeof FormSchema>) => {
-		// console.log({ values });
-		const path = `${project?.paths[0]?.path}/domain.json`;
-		const content = JSON.stringify(values);
-		handleCreateFile(path, content);
+	const onSubmit = async (values: z.infer<typeof FormSchema>) => {
+		const completeValues = {
+			...DEFAULTS,
+			...values,
+		};
+		await saveDomainValues(completeValues);
 		toast.success('Saved');
 	};
 
 	useEffect(() => {
-		if (project && !domainValues) setCurrentValues();
-		form.reset(domainValues);
-	}, [project, domainValues]);
+		if (project) loadDomainValues();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [project]);
 
 	return (
 		<div className="space-y-6">
@@ -162,7 +202,7 @@ export function FwiDomain() {
 									<Button
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFileDirectory('csgfOutDirectory')}
+										onClick={() => onFindFileDirectory(field.name)}
 									>
 										Find
 									</Button>
@@ -187,7 +227,7 @@ export function FwiDomain() {
 									<Button
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFileDirectory('geomDirectory')}
+										onClick={() => onFindFileDirectory(field.name)}
 									>
 										Find
 									</Button>
@@ -211,7 +251,7 @@ export function FwiDomain() {
 									<Button
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFile('imageDimensionFile')}
+										onClick={() => onFindFile(field.name)}
 									>
 										Find
 									</Button>
@@ -235,7 +275,7 @@ export function FwiDomain() {
 									<Button
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFile('initialVpFile')}
+										onClick={() => onFindFile(field.name)}
 									>
 										Find
 									</Button>
@@ -259,7 +299,7 @@ export function FwiDomain() {
 									<Button
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFile('initialDensityFile')}
+										onClick={() => onFindFile(field.name)}
 									>
 										Find
 									</Button>

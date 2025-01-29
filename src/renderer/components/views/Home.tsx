@@ -53,16 +53,9 @@ export function Home() {
 						<CardDescription>Project</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
-						<div className="grid gap-4 grid-cols-2">
+						<div className="grid gap-4 grid-cols-1">
 							<Button asChild>
 								<Link to={nav.fwi.href}>Start Processing</Link>
-							</Button>
-							<Button
-								onClick={() => openModal(EXISTING_PROJECT_DIALOG_KEY)}
-								variant="secondary"
-								className="w-full"
-							>
-								Existing Project
 							</Button>
 						</div>
 					</CardContent>

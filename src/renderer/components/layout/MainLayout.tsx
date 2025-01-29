@@ -1,16 +1,12 @@
-import AppStatus from '@/renderer/components/footer/AppStatus';
-import { Footer } from '@/renderer/components/footer/Footer';
-import OnlineStatus from '@/renderer/components/footer/OnlineStatus';
 import { Menu } from '@/renderer/components/menu/Menu';
-import { useGlobalContext } from '@/renderer/context/global-context';
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import AppVersion from '../footer/AppVersion';
+import { Footer } from '../footer/Footer';
 
 // We can't use the ScrollArea here or the scroll will persist between navigations
 export function MainLayout({ children }: { children?: React.ReactNode }) {
-	const { settings } = useGlobalContext();
-
 	return (
 		<div className="w-full h-full flex flex-col">
 			<Menu className="shrink-0" />
@@ -19,10 +15,9 @@ export function MainLayout({ children }: { children?: React.ReactNode }) {
 					{children || <Outlet />}
 				</div>
 			</div>
-			{/* <Footer>
-				<OnlineStatus />
-				<AppStatus />
-			</Footer> */}
+			<Footer>
+				<AppVersion />
+			</Footer>
 		</div>
 	);
 }

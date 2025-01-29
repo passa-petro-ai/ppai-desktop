@@ -3,8 +3,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Separator } from '@/components/ui/separator';
-import { InputColor } from '@/renderer/components/input/InputColor';
-import { ThemeForm } from '@/renderer/components/views/settings/appearance/ThemeForm';
 import { useGlobalContext } from '@/renderer/context/global-context';
 
 import {
@@ -20,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { Operation } from '@/types/fwi/operation';
+import { checkFileDirectory, createFile, readFile } from '@/main/files';
+import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 
 const FormSchema = z.object({
 	numberOfIterations: z.coerce.number(),
@@ -42,7 +43,7 @@ const FormSchema = z.object({
 	maxGaussianSmoothingFilterSizeInX: z.coerce.number(),
 });
 
-const defaults = {
+const DEFAULTS: Operation = {
 	numberOfIterations: 0,
 	numberOfIterationsPerFrequencyGroup: 0,
 	numberOfShotStride: 0,
@@ -63,70 +64,81 @@ const defaults = {
 	maxGaussianSmoothingFilterSizeInX: 0,
 };
 
-const handleFindFile = async () => {
-	return window.electron.findFile().then((result) => result);
-};
-
-const handleFindFileDirectroy = async () => {
-	return window.electron.findFileDirectory().then((result) => result);
-};
-
-const handleReadFile = async (path: string) => {
-	const exists = await window.electron.checkFileDirectory(path);
-	if (!exists) return null;
-	return window.electron.readFile(path).then((result) => result);
-};
-
-const handleCreateFile = (directory: string, content: any) => {
-	window.electron.createFile(directory, content);
-};
+const FILE_NAME = 'operation.json';
 
 export function FwiOperation() {
 	const { project } = useGlobalContext();
 
-	const [operationValues, setOperationValues] = useState<
-		typeof defaults | null
-	>(null);
+	const [operationValues, setOperationValues] = useState<Operation>(DEFAULTS);
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: operationValues || defaults,
+		defaultValues: DEFAULTS,
+		values: operationValues,
 	});
 
-	const setCurrentValues = async () => {
-		const file = await handleReadFile(`${project?.paths[0]?.path}/operation.json`);
-		if (file) {
-			setOperationValues(JSON.parse(file));
-		}
-		// console.log(form.getValues());
-	};
-
-	const onFindFile = async (field: any) => {
-		const file = await handleFindFile();
-		const isCancelled = file.canceled;
-
-		if (isCancelled) {
+	const saveOperationValues = async (values: typeof DEFAULTS) => {
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
 			return;
 		}
 
-		if (file?.filePaths?.length) {
-			const path = file.filePaths[0];
-			form.setValue(field, path);
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+		const content = JSON.stringify(values);
+
+		createFile(path, content);
+	};
+
+	const fetchDomainValues = async () => {
+		// console.log('Start Fetch');
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
+		}
+
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+
+		const isExisting = await checkFileDirectory(path);
+		if (!isExisting) saveOperationValues(DEFAULTS);
+
+		const content: string = await readFile(path);
+
+		if (!content) {
+			toast.error('There was an error loading configuration file.');
+		}
+
+		try {
+			const values: Operation = JSON.parse(content);
+			return values;
+		} catch {
+			toast.error('The configuration file is possibly malformed.');
+			return null;
 		}
 	};
 
-	const onSubmit = (values: z.infer<typeof FormSchema>) => {
-		// console.log({ values });
-		const path = `${project?.paths[0]?.path}/operation.json`;
-		const content = JSON.stringify(values);
-		handleCreateFile(path, content);
+	const loadOperationValues = async () => {
+		const values = await fetchDomainValues();
+		setOperationValues({
+			...DEFAULTS,
+			...values,
+		});
+	};
+
+	const onSubmit = async (values: z.infer<typeof FormSchema>) => {
+		const completeValues = {
+			...DEFAULTS,
+			...values,
+		};
+		await saveOperationValues(completeValues);
 		toast.success('Saved');
 	};
 
 	useEffect(() => {
-		if (project && !operationValues) setCurrentValues();
-		form.reset(operationValues);
-	}, [project, operationValues]);
+		if (project) loadOperationValues();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [project]);
 
 	return (
 		<div className="space-y-6">

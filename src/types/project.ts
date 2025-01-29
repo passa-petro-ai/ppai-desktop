@@ -1,7 +1,7 @@
-export interface Project {
+export type Project = {
 	name: string;
 	segyDataFile: string;
 	segyModelFile: string;
 	shotKeyword: string;
 	paths: any;
-}
+};
