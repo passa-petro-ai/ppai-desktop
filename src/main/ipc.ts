@@ -24,7 +24,6 @@ import {
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
-import * as pty from 'node-pty';
 
 export default {
 	initialize() {
@@ -122,16 +121,19 @@ export default {
 
 		ipcMain.on(
 			ipcChannels.CREATE_FILE,
-			(_event: any, directory: string, content: any) => {
-				fs.writeFileSync(directory, content, 'utf8');
+			(_event: any, directory: string, content: any, encoding = 'utf8') => {
+				fs.writeFileSync(directory, content, encoding);
 			},
 		);
 
-		ipcMain.handle(ipcChannels.READ_FILE, (_event: any, path: string) => {
-			const isFileExisting = fs.existsSync(path);
-			if (!isFileExisting) return null;
-			return fs.readFileSync(path, 'utf8');
-		});
+		ipcMain.handle(
+			ipcChannels.READ_FILE,
+			(_event: any, path: string, encoding: 'utf8') => {
+				const isFileExisting = fs.existsSync(path);
+				if (!isFileExisting) return null;
+				return fs.readFileSync(path, encoding);
+			},
+		);
 
 		ipcMain.on(ipcChannels.SET_PROJECT, (_event: any, project: Project) => {
 			setProject(project);
@@ -161,23 +163,5 @@ export default {
 
 			return dialog.showOpenDialog(window, { properties: ['openDirectory'] });
 		});
-
-		var os = getOS();
-		var nativeShell = os === "windows" ? "powershell.exe" : "bash";
-		var ptyProcess = pty.spawn(nativeShell, [], {
-						name: 'xterm-color',
-						cols: 80,
-						rows: 24,
-						cwd: process.env.HOME,
-						env: process.env
-				});
-    
-		ptyProcess.onData((data: any) => {
-			windows.mainWindow?.webContents.send("terminal-incData", data);
-		});
-
-    ipcMain.on("terminal-into", (event, data)=> {
-      ptyProcess.write(data);
-    })
 	},
 };

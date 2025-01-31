@@ -35,7 +35,7 @@ const READ_FILE = 'read-file';
 
 const SET_PROJECT = 'set-project';
 
-const TERMINAL_INTO = 'terminal-into';
+const RUN_COMMAND = 'run-python';
 
 export const ipcChannels = {
 	// main -> renderer
@@ -70,5 +70,5 @@ export const ipcChannels = {
 
 	SET_PROJECT,
 
-	TERMINAL_INTO,
+	RUN_COMMAND,
 };

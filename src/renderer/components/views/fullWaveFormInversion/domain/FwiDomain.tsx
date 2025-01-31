@@ -24,9 +24,16 @@ import {
 	readFile,
 	findFile,
 	checkFileDirectory,
+	createFileDirectory,
 } from '@/main/files';
 import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 import { Domain } from '@/types/fwi/domain';
+import { Card } from '@/components/ui/card';
+
+import { render } from '@/main/plotter';
+import { Download } from 'lucide-react';
+import { openDialog } from '@/main/dialog';
+// import { useWorker } from '@koale/useworker';
 
 const FormSchema = z.object({
 	csgfOutDirectory: z.string().trim().refine(refinePathValidator, {
@@ -72,10 +79,19 @@ const DEFAULTS: Domain = {
 
 const FILE_NAME = 'domain.json';
 
+enum ModelTypes {
+	Velocity,
+	Density,
+}
+
 export function FwiDomain() {
 	const { project } = useGlobalContext();
 
 	const [domainValues, setDomainValues] = useState<Domain>(DEFAULTS);
+
+	// const [renderWorker] = useWorker(render);
+	const [velocityModelOutput, setVelocityModelOutput] = useState<string>();
+	const [densityModelOutput, setDencityModelOutput] = useState<string>();
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
@@ -169,8 +185,88 @@ export function FwiDomain() {
 		toast.success('Saved');
 	};
 
+	const renderModel = async (modelInputFilePath: string) => {
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
+		}
+
+		const RENDERED_MODELS_FOLDER = 'rendered_models';
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const renderedModelsOutputPath = `${baseProjectPath}/${RENDERED_MODELS_FOLDER}`;
+
+		await createFileDirectory(renderedModelsOutputPath);
+		
+		const renderedModelOutputFileName = modelInputFilePath
+			?.split('\\')
+			?.pop()
+			?.split('/')
+			?.pop()
+			?.split('.')
+			?.slice(0, -1)
+			?.join('.');
+
+		const modelOutputFilePath = `${renderedModelsOutputPath}/${renderedModelOutputFileName}`;
+		render(modelInputFilePath, modelOutputFilePath);
+		return modelOutputFilePath;
+	};
+
+	const loadModels = async (modelType: ModelTypes) => {
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
+		}
+
+		let inputFileName = '';
+
+		const INPUT_DENSITY_MODEL_FILE_NAME = 'density_z6.25m_x12.5m_exact.bin';
+		const INPUT_VELOCITY_MODEL_FILE_NAME = 'vel_z6.25m_x12.5m_exact.bin';
+
+		switch (modelType) {
+			case ModelTypes.Density:
+				inputFileName = INPUT_DENSITY_MODEL_FILE_NAME;
+				break;
+			case ModelTypes.Velocity:
+				inputFileName = INPUT_VELOCITY_MODEL_FILE_NAME;
+				break;
+			default:
+				toast.error('Could not find correct model type.');
+				return;
+		}
+
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const modelInputFilePath = `${baseProjectPath}/${inputFileName}`;
+
+		const isExisting = await checkFileDirectory(modelInputFilePath);
+		if (!isExisting) return;
+
+		const modelOutputFilePath = await renderModel(modelInputFilePath);
+
+		if (!modelOutputFilePath) {
+			toast.error('Could not find correct model type.');
+			return;
+		}
+
+		const content = await readFile(modelOutputFilePath, 'utf8');
+
+		switch (modelType) {
+			case ModelTypes.Density:
+				setDencityModelOutput(content);
+				break;
+			case ModelTypes.Velocity:
+				setVelocityModelOutput(content);
+				break;
+			default:
+				toast.error('Could not find correct model type.');
+		}
+	};
+
 	useEffect(() => {
-		if (project) loadDomainValues();
+		if (project) {
+			loadDomainValues();
+			loadModels(ModelTypes.Density);
+			loadModels(ModelTypes.Velocity);
+		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [project]);
 
@@ -480,13 +576,19 @@ export function FwiDomain() {
 							)}
 						/>
 					</div>
-					{/* <Separator />
+					<Separator />
 					<div className="grid grid-cols-2 items-center gap-4">
-						<Card className="w-full h-48" />
-						<Card className="w-full h-48" />
-						<Card className="w-full h-48" />
-						<Card className="w-full h-48" />
-					</div> */}
+						<img
+							src={velocityModelOutput}
+							className="w-full relative max-w-sm h-48 max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
+							alt="Velocity"
+						/>
+						<img
+							src={densityModelOutput}
+							className="w-full relative max-w-sm h-48 max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
+							alt="Density"
+						/>
+					</div>
 					<Button type="submit">Save</Button>
 				</form>
 			</Form>

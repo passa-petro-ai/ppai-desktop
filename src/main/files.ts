@@ -2,14 +2,18 @@ export const findFile = async (extensions: string[] = []) => {
 	return window.electron.findFile(extensions).then((result) => result);
 };
 
-export const readFile = async (path: string, extensions: string[] = []) => {
+export const readFile = async (path: string, encoding: string = 'utf8') => {
 	const exists = await window.electron.checkFileDirectory(path);
 	if (!exists) return null;
-	return window.electron.readFile(path).then((result) => result);
+	return window.electron.readFile(path, encoding).then((result) => result);
 };
 
-export const createFile = (directory: string, content: any) => {
-	window.electron.createFile(directory, content);
+export const createFile = (
+	directory: string,
+	content: any,
+	encoding = 'utf8',
+) => {
+	window.electron.createFile(directory, content, encoding);
 };
 
 export const checkFileDirectory = async (path: string) =>

@@ -17,8 +17,8 @@ export default function FwiLayout({ children }: FwiLayoutProps) {
 	const { pathname: location } = useLocation(); // We use this to reset the scroll position when the location changes
 
 	const [isAutoRestart, setIsAutoRestart] = useState<boolean>(false);
-	const [iterations, setIterations] = useState<number>(100);
-	const [frequencyGroup, setFrequencyGroup] = useState<number>(10);
+	const [iterations, setIterations] = useState<number>(1);
+	const [frequencyGroup, setFrequencyGroup] = useState<number>(1);
 
 	return (
 		<>

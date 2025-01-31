@@ -67,11 +67,11 @@ const electronHandler = {
 	checkFileDirectory(directory: string) {
 		return ipcRenderer.invoke(ipcChannels.CHECK_FILE_DIRECTORY, directory);
 	},
-	createFile(directory: string, content: string) {
-		ipcRenderer.send(ipcChannels.CREATE_FILE, directory, content);
+	createFile(directory: string, content: string, encoding = 'utf8') {
+		ipcRenderer.send(ipcChannels.CREATE_FILE, directory, content, encoding);
 	},
-	readFile(path: string) {
-		return ipcRenderer.invoke(ipcChannels.READ_FILE, path);
+	readFile(path: string, encoding: string = 'utf8') {
+		return ipcRenderer.invoke(ipcChannels.READ_FILE, path, encoding);
 	},
 	setProject(settings: Partial<Project>) {
 		ipcRenderer.send(ipcChannels.SET_PROJECT, settings);

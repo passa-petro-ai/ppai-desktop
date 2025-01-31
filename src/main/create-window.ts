@@ -68,8 +68,9 @@ const createWindow = (opts?: BrowserWindowConstructorOptions) => {
 			? path.join(__dirname, 'preload.js')
 			: path.join(__dirname, '../../.erb/dll/preload.js'),
 		// Todo: secure
-		// contextIsolation: true, // Ensure context isolation
-		// nodeIntegration: false, // Disable Node.js integration
+		// contextIsolation: false, // Ensure context isolation
+		// nodeIntegration: true, // Disable Node.js integration
+		// nodeIntegrationInWorker: true,
 	};
 
 	const browserWindow = new BrowserWindow(options);
