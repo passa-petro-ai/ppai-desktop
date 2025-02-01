@@ -28,12 +28,11 @@ import {
 } from '@/main/files';
 import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 import { Domain } from '@/types/fwi/domain';
-import { Card } from '@/components/ui/card';
 
 import { render } from '@/main/plotter';
-import { Download } from 'lucide-react';
-import { openDialog } from '@/main/dialog';
-// import { useWorker } from '@koale/useworker';
+import { Loader2 } from 'lucide-react';
+import { useWorker } from '@koale/useworker';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 const FormSchema = z.object({
 	csgfOutDirectory: z.string().trim().refine(refinePathValidator, {
@@ -78,20 +77,21 @@ const DEFAULTS: Domain = {
 };
 
 const FILE_NAME = 'domain.json';
-
-enum ModelTypes {
-	Velocity,
-	Density,
-}
-
 export function FwiDomain() {
 	const { project } = useGlobalContext();
-
 	const [domainValues, setDomainValues] = useState<Domain>(DEFAULTS);
 
-	// const [renderWorker] = useWorker(render);
-	const [velocityModelOutput, setVelocityModelOutput] = useState<string>();
-	const [densityModelOutput, setDencityModelOutput] = useState<string>();
+	const [velocityModelOutput, setVelocityModelOutput] = useState<string | null>(
+		null,
+	);
+	const [densityModelOutput, setDencityModelOutput] = useState<string | null>(
+		null,
+	);
+
+	const [isVelocityModelRendering, setIsVelocityModelRendering] =
+		useState<boolean>(false);
+	const [isDensityModelRendering, setIsDensityModelRendering] =
+		useState<boolean>(false);
 
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
@@ -113,7 +113,6 @@ export function FwiDomain() {
 	};
 
 	const fetchDomainValues = async () => {
-		// console.log('Start Fetch');
 		if (project == null || !project.name) {
 			toast.error('Project could not be found.');
 			return;
@@ -153,12 +152,14 @@ export function FwiDomain() {
 		const isCancelled = file.canceled;
 
 		if (isCancelled) {
-			return;
+			return null;
 		}
 
 		if (file?.filePaths?.length) {
+			form.clearErrors(field.name);
 			const path = file.filePaths[0];
 			form.setValue(field, path);
+			return path;
 		}
 	};
 
@@ -185,6 +186,8 @@ export function FwiDomain() {
 		toast.success('Saved');
 	};
 
+	const [renderWorker] = useWorker(render);
+
 	const renderModel = async (modelInputFilePath: string) => {
 		if (project == null || !project.name) {
 			toast.error('Project could not be found.');
@@ -196,7 +199,7 @@ export function FwiDomain() {
 		const renderedModelsOutputPath = `${baseProjectPath}/${RENDERED_MODELS_FOLDER}`;
 
 		await createFileDirectory(renderedModelsOutputPath);
-		
+
 		const renderedModelOutputFileName = modelInputFilePath
 			?.split('\\')
 			?.pop()
@@ -207,39 +210,12 @@ export function FwiDomain() {
 			?.join('.');
 
 		const modelOutputFilePath = `${renderedModelsOutputPath}/${renderedModelOutputFileName}`;
-		render(modelInputFilePath, modelOutputFilePath);
+		renderWorker(modelInputFilePath, modelOutputFilePath);
+
 		return modelOutputFilePath;
 	};
 
-	const loadModels = async (modelType: ModelTypes) => {
-		if (project == null || !project.name) {
-			toast.error('Project could not be found.');
-			return;
-		}
-
-		let inputFileName = '';
-
-		const INPUT_DENSITY_MODEL_FILE_NAME = 'density_z6.25m_x12.5m_exact.bin';
-		const INPUT_VELOCITY_MODEL_FILE_NAME = 'vel_z6.25m_x12.5m_exact.bin';
-
-		switch (modelType) {
-			case ModelTypes.Density:
-				inputFileName = INPUT_DENSITY_MODEL_FILE_NAME;
-				break;
-			case ModelTypes.Velocity:
-				inputFileName = INPUT_VELOCITY_MODEL_FILE_NAME;
-				break;
-			default:
-				toast.error('Could not find correct model type.');
-				return;
-		}
-
-		const baseProjectPath = getBaseProjectPath(project?.name);
-		const modelInputFilePath = `${baseProjectPath}/${inputFileName}`;
-
-		const isExisting = await checkFileDirectory(modelInputFilePath);
-		if (!isExisting) return;
-
+	const loadModel = async (modelInputFilePath: string) => {
 		const modelOutputFilePath = await renderModel(modelInputFilePath);
 
 		if (!modelOutputFilePath) {
@@ -249,23 +225,58 @@ export function FwiDomain() {
 
 		const content = await readFile(modelOutputFilePath, 'utf8');
 
-		switch (modelType) {
-			case ModelTypes.Density:
-				setDencityModelOutput(content);
-				break;
-			case ModelTypes.Velocity:
-				setVelocityModelOutput(content);
-				break;
-			default:
-				toast.error('Could not find correct model type.');
+		return content;
+	};
+
+	const renderVelocityModel = async () => {
+		setIsVelocityModelRendering(true);
+
+		const initialVpPathState = form.getFieldState('initialVpFile');
+		const modelInputFilePath = form.getValues('initialVpFile');
+
+		if (
+			initialVpPathState.invalid ||
+			initialVpPathState.isValidating ||
+			initialVpPathState.isDirty ||
+			!modelInputFilePath
+		) {
+			setIsVelocityModelRendering(false);
+			return;
 		}
+
+		setVelocityModelOutput(null);
+
+		const modelOutputBase64 = await loadModel(modelInputFilePath);
+		if (modelOutputBase64) setVelocityModelOutput(modelOutputBase64);
+		toast.info('Rendered Initial VP Model');
+		setIsVelocityModelRendering(false);
+	};
+
+	const renderDensityModel = async () => {
+		setIsDensityModelRendering(true);
+
+		const initialVpPathState = form.getFieldState('initialDensityFile');
+		const modelInputFilePath = form.getValues('initialDensityFile');
+
+		if (
+			initialVpPathState.invalid ||
+			initialVpPathState.isValidating ||
+			initialVpPathState.isDirty ||
+			!modelInputFilePath
+		) {
+			setIsDensityModelRendering(false);
+			return;
+		}
+
+		const modelOutputBase64 = await loadModel(modelInputFilePath);
+		if (modelOutputBase64) setDencityModelOutput(modelOutputBase64);
+		toast.info('Rendered Initial Density Model');
+		setIsDensityModelRendering(false);
 	};
 
 	useEffect(() => {
 		if (project) {
 			loadDomainValues();
-			loadModels(ModelTypes.Density);
-			loadModels(ModelTypes.Velocity);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [project]);
@@ -296,6 +307,7 @@ export function FwiDomain() {
 										/>
 									</FormControl>
 									<Button
+										type="button"
 										variant="secondary"
 										className="col-span-1"
 										onClick={() => onFindFileDirectory(field.name)}
@@ -321,6 +333,7 @@ export function FwiDomain() {
 										<Input placeholder="GEOM Directory" {...field} />
 									</FormControl>
 									<Button
+										type="button"
 										variant="secondary"
 										className="col-span-1"
 										onClick={() => onFindFileDirectory(field.name)}
@@ -345,9 +358,10 @@ export function FwiDomain() {
 										<Input placeholder="Image Dimension File" {...field} />
 									</FormControl>
 									<Button
+										type="button"
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFile(field.name)}
+										onClick={async () => onFindFile(field.name)}
 									>
 										Find
 									</Button>
@@ -369,11 +383,20 @@ export function FwiDomain() {
 										<Input placeholder="Initial VP File" {...field} />
 									</FormControl>
 									<Button
+										type="button"
+										disabled={isVelocityModelRendering}
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFile(field.name)}
+										onClick={async () => {
+											await onFindFile(field.name);
+											renderVelocityModel();
+										}}
 									>
-										Find
+										{isVelocityModelRendering ? (
+											<Loader2 className="animate-spin" />
+										) : (
+											'Find'
+										)}
 									</Button>
 								</div>
 								<FormMessage />
@@ -393,11 +416,20 @@ export function FwiDomain() {
 										<Input placeholder="Initial Density File" {...field} />
 									</FormControl>
 									<Button
+										type="button"
+										disabled={isDensityModelRendering}
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFile(field.name)}
+										onClick={async () => {
+											await onFindFile(field.name);
+											renderDensityModel();
+										}}
 									>
-										Find
+										{isDensityModelRendering ? (
+											<Loader2 className="animate-spin" />
+										) : (
+											'Find'
+										)}
 									</Button>
 								</div>
 								<FormMessage />
@@ -578,16 +610,72 @@ export function FwiDomain() {
 					</div>
 					<Separator />
 					<div className="grid grid-cols-2 items-center gap-4">
-						<img
-							src={velocityModelOutput}
-							className="w-full relative max-w-sm h-48 max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
-							alt="Velocity"
-						/>
-						<img
-							src={densityModelOutput}
-							className="w-full relative max-w-sm h-48 max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
-							alt="Density"
-						/>
+						<Dialog>
+							<DialogTrigger asChild>
+								<figure>
+									{velocityModelOutput && (
+										<img
+											src={velocityModelOutput}
+											className="w-full relative max-w-full object-fit max-w-sm max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
+											alt="Velocity"
+										/>
+									)}
+
+									{!velocityModelOutput && (
+										<div className="flex items-center justify-center w-full h-48 bg-gray-300 rounded-sm sm:w-96 dark:bg-gray-700">
+											<svg
+												className="w-10 h-10 text-gray-200 dark:text-gray-600"
+												aria-hidden="true"
+												xmlns="http://www.w3.org/2000/svg"
+												fill="currentColor"
+												viewBox="0 0 20 18"
+											>
+												<path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z" />
+											</svg>
+										</div>
+									)}
+									<figcaption className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
+										v<sub>ρ</sub> model
+									</figcaption>
+								</figure>
+							</DialogTrigger>
+							<DialogContent className="max-w-5xl border-0 flex">
+								<div className="relative w-screen  overflow-clip rounded-md bg-transparent">
+									<img
+										src={velocityModelOutput}
+										className="w-full relative max-w-full object-fit max-w-sm max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
+										alt="Velocity"
+									/>
+								</div>
+							</DialogContent>
+						</Dialog>
+
+						<figure>
+							{densityModelOutput && (
+								<img
+									src={densityModelOutput}
+									className="w-full relative max-w-full object-fit max-w-sm max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
+									alt="Density"
+								/>
+							)}
+
+							{!densityModelOutput && (
+								<div className="flex items-center justify-center w-full h-48 bg-gray-300 rounded-sm sm:w-96 dark:bg-gray-700">
+									<svg
+										className="w-10 h-10 text-gray-200 dark:text-gray-600"
+										aria-hidden="true"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="currentColor"
+										viewBox="0 0 20 18"
+									>
+										<path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z" />
+									</svg>
+								</div>
+							)}
+							<figcaption className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
+								ρ model
+							</figcaption>
+						</figure>
 					</div>
 					<Button type="submit">Save</Button>
 				</form>
