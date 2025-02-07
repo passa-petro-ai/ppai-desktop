@@ -165,3 +165,11 @@ export const setFwiDomain = (fwiDomain: any) => {
 export const getFwiDomain = () => {
 	return store.get('fwiDomain');
 };
+
+export const getPlotPath = () => {
+	return store.get('plotPath');
+};
+
+export const setPlotPath = (plotData: any) => {
+	return store.set('plotPath', plotData);
+};

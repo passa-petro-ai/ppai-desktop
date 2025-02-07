@@ -5,6 +5,9 @@ const initialize = () => {
 	if (!app.requestSingleInstanceLock()) {
 		app.quit();
 	}
+
+	const gpuFeatureStatus = app.getGPUFeatureStatus();
+	console.log({ gpuFeatureStatus })
 };
 
 export default { initialize };

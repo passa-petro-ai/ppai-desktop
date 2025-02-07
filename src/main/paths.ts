@@ -6,6 +6,10 @@ export const __assets = app.isPackaged
 	? path.join(process.resourcesPath, 'assets')
 	: path.join(__dirname, '../../assets');
 
+export const __projects = app.isPackaged
+	? path.join(process.resourcesPath, 'Projects')
+	: path.join(__dirname, '../../Projects');
+
 export const __app = app.getAppPath();
 export const __sounds = path.join(__assets, 'sounds') + path.sep;
 

@@ -5,8 +5,8 @@
 import { net, protocol } from 'electron';
 import Logger from 'electron-log/main';
 import path from 'path';
-import { PROTOCOL } from '../config/config';
-import { __assets } from './paths';
+import { PROJECT_PROTOCOL, PROTOCOL } from '../config/config';
+import { __assets, __projects } from './paths';
 
 const register = () => {
 	Logger.status(`Registering file protocol: ${PROTOCOL}`);
@@ -37,6 +37,16 @@ const initialize = () => {
 		const filepath = path
 			.join(__assets, request.url.slice(`${PROTOCOL}://`.length))
 			.replace(/\/$/, ''); // remove trailing slash
+		const file = `file://${filepath}`;
+		Logger.info(`Protocol request: ${request.url}; File: ${file}`);
+		return net.fetch(file);
+	});
+
+	protocol.handle(PROJECT_PROTOCOL, (request: any) => {
+		const filepath = path
+			.join(__projects, request.url.slice(`${PROJECT_PROTOCOL}://`.length))
+			.replace(/\/$/, ''); // remove trailing slash
+
 		const file = `file://${filepath}`;
 		Logger.info(`Protocol request: ${request.url}; File: ${file}`);
 		return net.fetch(file);

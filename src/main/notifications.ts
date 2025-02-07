@@ -4,6 +4,7 @@ import { ipcChannels } from '../config/ipc-channels';
 import { NotificationOptions } from '../types/notification';
 import { getSetting } from './store-actions';
 import windows from './windows';
+import dialog from './dialog';
 
 export const mainNotification = (options: NotificationOptions) => {
 	Logger.info(
@@ -23,11 +24,6 @@ export const rendererNotification = (options: NotificationOptions) => {
 		`Sending notification to renderer process: ${options.title} - ${options.body}`,
 	);
 	windows.mainWindow?.webContents.send(ipcChannels.APP_NOTIFICATION, options);
-
-	windows.mainWindow?.webContents.send(
-		ipcChannels.OPEN_MODAL_BY_ID,
-		'ExistingProjectModal',
-	);
 };
 
 export const notification = (options: NotificationOptions) => {

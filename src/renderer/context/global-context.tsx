@@ -33,6 +33,10 @@ interface GlobalContextType {
 	closeModal: (key: string) => void;
 	project: Project | null;
 	setProject: (newProject: Partial<Project>) => void;
+	setIsLoading: (isLoading: boolean) => void;
+	isLoading: boolean;
+	plotPath: string;
+	setPlotPath: (plotPath: string) => void;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -48,6 +52,10 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	closeModal: () => {},
 	project: null,
 	setProject: () => {},
+	setIsLoading: () => {},
+	isLoading: false,
+	plotPath: '',
+	setPlotPath: () => {},
 });
 
 export function GlobalContextProvider({
@@ -60,6 +68,7 @@ export function GlobalContextProvider({
 		[],
 	);
 	const [messages, setMessages] = React.useState<string[]>([]);
+	const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
 	const [settings, setCurrentSettings] =
 		React.useState<SettingsType>(DEFAULT_SETTINGS);
@@ -69,6 +78,7 @@ export function GlobalContextProvider({
 
 	const [modals, setCurrentModals] = React.useState<OpenModalsTrackerType>([]);
 	const [project, setCurrentProject] = React.useState<Project | null>(null);
+	const [plotPath, setCurrentPlotPath] = React.useState<any>(null);
 
 	useEffect(() => {
 		// Create handler for receiving asynchronous messages from the main process
@@ -83,6 +93,7 @@ export function GlobalContextProvider({
 						appMenu: menu,
 						modals: d,
 						project: p,
+						plotPath: pd,
 					} = res;
 
 					setCurrentSettings(s);
@@ -91,6 +102,7 @@ export function GlobalContextProvider({
 					setAppMenu(menu);
 					setCurrentModals(d);
 					setCurrentProject(p);
+					setCurrentPlotPath(pd);
 				})
 				.catch(console.error);
 		};
@@ -104,6 +116,8 @@ export function GlobalContextProvider({
 		window.electron.ipcRenderer.on(
 			ipcChannels.APP_NOTIFICATION,
 			({ title, body, action }: any) => {
+				window.location.href = '#fwi';
+
 				toast(title, {
 					...(body ? { description: body } : {}),
 					...(action ? { action } : {}),
@@ -171,6 +185,10 @@ export function GlobalContextProvider({
 		window.electron.setProject(newProject);
 	}, []);
 
+	const setPlotPath = useCallback((plotData: any) => {
+		window.electron.setPlotPath(plotData);
+	}, []);
+
 	const value = useMemo(() => {
 		return {
 			app: appInfo,
@@ -185,6 +203,10 @@ export function GlobalContextProvider({
 			closeModal,
 			project,
 			setProject,
+			setIsLoading,
+			isLoading,
+			plotPath,
+			setPlotPath,
 		};
 	}, [
 		appInfo,
@@ -198,6 +220,10 @@ export function GlobalContextProvider({
 		closeModal,
 		project,
 		setProject,
+		setIsLoading,
+		isLoading,
+		plotPath,
+		setPlotPath,
 	]);
 
 	return (

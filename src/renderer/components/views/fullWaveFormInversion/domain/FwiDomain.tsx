@@ -31,8 +31,7 @@ import { Domain } from '@/types/fwi/domain';
 
 import { render } from '@/main/plotter';
 import { Loader2 } from 'lucide-react';
-import { useWorker } from '@koale/useworker';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { PROJECT_PROTOCOL } from '@/config/config';
 
 const FormSchema = z.object({
 	csgfOutDirectory: z.string().trim().refine(refinePathValidator, {
@@ -78,7 +77,7 @@ const DEFAULTS: Domain = {
 
 const FILE_NAME = 'domain.json';
 export function FwiDomain() {
-	const { project } = useGlobalContext();
+	const { project, setIsLoading, setPlotPath } = useGlobalContext();
 	const [domainValues, setDomainValues] = useState<Domain>(DEFAULTS);
 
 	const [velocityModelOutput, setVelocityModelOutput] = useState<string | null>(
@@ -139,14 +138,6 @@ export function FwiDomain() {
 		}
 	};
 
-	const loadDomainValues = async () => {
-		const values = await fetchDomainValues();
-		setDomainValues({
-			...DEFAULTS,
-			...values,
-		});
-	};
-
 	const onFindFile = async (field: any) => {
 		const file = await findFile();
 		const isCancelled = file.canceled;
@@ -186,8 +177,6 @@ export function FwiDomain() {
 		toast.success('Saved');
 	};
 
-	const [renderWorker] = useWorker(render);
-
 	const renderModel = async (modelInputFilePath: string) => {
 		if (project == null || !project.name) {
 			toast.error('Project could not be found.');
@@ -210,9 +199,8 @@ export function FwiDomain() {
 			?.join('.');
 
 		const modelOutputFilePath = `${renderedModelsOutputPath}/${renderedModelOutputFileName}`;
-		renderWorker(modelInputFilePath, modelOutputFilePath);
-
-		return modelOutputFilePath;
+		const outputPath = await render(modelInputFilePath, modelOutputFilePath);
+		return outputPath;
 	};
 
 	const loadModel = async (modelInputFilePath: string) => {
@@ -223,12 +211,11 @@ export function FwiDomain() {
 			return;
 		}
 
-		const content = await readFile(modelOutputFilePath, 'utf8');
-
-		return content;
+		return modelOutputFilePath;
 	};
 
 	const renderVelocityModel = async () => {
+		setIsLoading(true);
 		setIsVelocityModelRendering(true);
 
 		const initialVpPathState = form.getFieldState('initialVpFile');
@@ -241,18 +228,23 @@ export function FwiDomain() {
 			!modelInputFilePath
 		) {
 			setIsVelocityModelRendering(false);
+			setIsLoading(false);
 			return;
 		}
 
 		setVelocityModelOutput(null);
-
-		const modelOutputBase64 = await loadModel(modelInputFilePath);
-		if (modelOutputBase64) setVelocityModelOutput(modelOutputBase64);
-		toast.info('Rendered Initial VP Model');
+		const outputPath = await loadModel(modelInputFilePath);
+		if (outputPath) {
+			const velocityModelOutputPath = `${PROJECT_PROTOCOL}://${outputPath.replace('Projects/', '')}`;
+			setVelocityModelOutput(velocityModelOutputPath);
+			toast.info('Rendered Initial VP Model');
+		}
 		setIsVelocityModelRendering(false);
+		setIsLoading(false);
 	};
 
 	const renderDensityModel = async () => {
+		setIsLoading(true);
 		setIsDensityModelRendering(true);
 
 		const initialVpPathState = form.getFieldState('initialDensityFile');
@@ -265,13 +257,28 @@ export function FwiDomain() {
 			!modelInputFilePath
 		) {
 			setIsDensityModelRendering(false);
+			setIsLoading(false);
 			return;
 		}
 
-		const modelOutputBase64 = await loadModel(modelInputFilePath);
-		if (modelOutputBase64) setDencityModelOutput(modelOutputBase64);
-		toast.info('Rendered Initial Density Model');
+		setDencityModelOutput(null);
+		const outputPath = await loadModel(modelInputFilePath);
+		if (outputPath) {
+			const densityModelOutputPath = `${PROJECT_PROTOCOL}://${outputPath.replace('Projects/', '')}`;
+			setDencityModelOutput(densityModelOutputPath);
+			toast.info('Rendered Initial Density Model');
+		}
+
 		setIsDensityModelRendering(false);
+		setIsLoading(false);
+	};
+
+	const loadDomainValues = async () => {
+		const values = await fetchDomainValues();
+		setDomainValues({
+			...DEFAULTS,
+			...values,
+		});
 	};
 
 	useEffect(() => {
@@ -279,7 +286,7 @@ export function FwiDomain() {
 			loadDomainValues();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [project]);
+	}, []);
 
 	return (
 		<div className="space-y-6">
@@ -389,14 +396,10 @@ export function FwiDomain() {
 										className="col-span-1"
 										onClick={async () => {
 											await onFindFile(field.name);
-											renderVelocityModel();
+											await renderVelocityModel();
 										}}
 									>
-										{isVelocityModelRendering ? (
-											<Loader2 className="animate-spin" />
-										) : (
-											'Find'
-										)}
+										Find
 									</Button>
 								</div>
 								<FormMessage />
@@ -438,7 +441,7 @@ export function FwiDomain() {
 					/>
 					<Separator />
 					<h4 className="text-md font-medium leading-none">Summary</h4>
-					<div className="grid grid-cols-2 items-center gap-4">
+					<div className="columns-2 min-w-[384px] max-w-[768px]">
 						<FormField
 							control={form.control}
 							name="numberOfSources"
@@ -608,59 +611,74 @@ export function FwiDomain() {
 							)}
 						/>
 					</div>
-					<Separator />
-					<div className="grid grid-cols-2 items-center gap-4">
-						<Dialog>
-							<DialogTrigger asChild>
-								<figure>
-									{velocityModelOutput && (
-										<img
-											src={velocityModelOutput}
-											className="w-full relative max-w-full object-fit max-w-sm max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
-											alt="Velocity"
-										/>
-									)}
 
-									{!velocityModelOutput && (
-										<div className="flex items-center justify-center w-full h-48 bg-gray-300 rounded-sm sm:w-96 dark:bg-gray-700">
-											<svg
-												className="w-10 h-10 text-gray-200 dark:text-gray-600"
-												aria-hidden="true"
-												xmlns="http://www.w3.org/2000/svg"
-												fill="currentColor"
-												viewBox="0 0 20 18"
-											>
-												<path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z" />
-											</svg>
-										</div>
-									)}
-									<figcaption className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
-										v<sub>ρ</sub> model
-									</figcaption>
-								</figure>
-							</DialogTrigger>
-							<DialogContent className="max-w-5xl border-0 flex">
-								<div className="relative w-screen  overflow-clip rounded-md bg-transparent">
+					<div className="grid grid-cols-2 gap-4  min-w-[384px] max-w-[768px] h-auto">
+						<figure>
+							{velocityModelOutput && (
+								<div className="relative">
 									<img
 										src={velocityModelOutput}
-										className="w-full relative max-w-full object-fit max-w-sm max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
+										className="w-full relative object-contain max-w-full bg-white max-w-sm max-w-xl h-64 rounded-lg shadow-xl dark:shadow-gray-800"
 										alt="Velocity"
 									/>
+									<Button
+										className="absolute bottom-4 mx-4"
+										variant="secondary"
+										type="button"
+										onClick={() => {
+											const plotPath = form.getValues('initialVpFile');
+											setPlotPath(plotPath);
+											window.electron.openPlotWindow();
+										}}
+									>
+										Open Viewer
+									</Button>
 								</div>
-							</DialogContent>
-						</Dialog>
+							)}
+
+							{!velocityModelOutput && (
+								<div className="flex items-center justify-center h-64 bg-gray-300 rounded-sm w-full dark:bg-gray-700">
+									<svg
+										className="w-10 h-10 text-gray-200 dark:text-gray-600"
+										aria-hidden="true"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="currentColor"
+										viewBox="0 0 20 18"
+									>
+										<path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z" />
+									</svg>
+								</div>
+							)}
+							<figcaption className="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
+								v<sub>ρ</sub> model
+							</figcaption>
+						</figure>
 
 						<figure>
 							{densityModelOutput && (
-								<img
-									src={densityModelOutput}
-									className="w-full relative max-w-full object-fit max-w-sm max-w-xl rounded-lg shadow-xl dark:shadow-gray-800"
-									alt="Density"
-								/>
+								<div className="relative">
+									<img
+										src={densityModelOutput}
+										className="w-full relative object-contain max-w-full bg-white max-w-sm max-w-xl h-64 rounded-lg shadow-xl dark:shadow-gray-800"
+										alt="Density"
+									/>
+									<Button
+										className="absolute bottom-4 mx-4"
+										variant="secondary"
+										type="button"
+										onClick={() => {
+											const plotPath = form.getValues('initialDensityFile');
+											setPlotPath(plotPath);
+											window.electron.openPlotWindow();
+										}}
+									>
+										Open Viewer
+									</Button>
+								</div>
 							)}
 
 							{!densityModelOutput && (
-								<div className="flex items-center justify-center w-full h-48 bg-gray-300 rounded-sm sm:w-96 dark:bg-gray-700">
+								<div className="flex items-center justify-center h-64 bg-gray-300 rounded-sm w-full dark:bg-gray-700">
 									<svg
 										className="w-10 h-10 text-gray-200 dark:text-gray-600"
 										aria-hidden="true"

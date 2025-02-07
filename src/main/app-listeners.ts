@@ -8,6 +8,7 @@ import keyboard from './keyboard';
 import { getSetting } from './store-actions';
 import { is } from './util';
 import windows from './windows';
+import dialog from './dialog';
 
 const register = () => {
 	Logger.status($init.appListeners);

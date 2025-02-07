@@ -385,7 +385,7 @@ export default class MenuBuilder {
 						label: 'Full Waveform Inversion',
 						id: 'fullWaveformInversion',
 						click: () => {
-							this.mainWindow.loadURL(resolveHashRoute('fwi/domain'));
+							// this.mainWindow.webContents.loadURL(resolveHashRoute('fwi/domain'));
 						},
 					},
 					{

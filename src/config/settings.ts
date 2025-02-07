@@ -19,7 +19,7 @@ export interface SettingsType {
 	theme: ThemeType;
 
 	// vibrancy: 'none' | 'sidebar' | 'full';
-	// hardwareAcceleration: boolean;
+	hardwareAcceleration: boolean;
 	// lastWindowState: {
 	// 	x: number;
 	// 	y: number;
@@ -41,7 +41,7 @@ export const DEFAULT_SETTINGS: SettingsType = {
 	showTrayIcon: true,
 	startMinimized: false,
 	quitOnWindowClose: false,
-
+	hardwareAcceleration: true,
 	theme: 'system',
 };
 

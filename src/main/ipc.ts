@@ -20,10 +20,13 @@ import {
 	getOpenModals,
 	getProject,
 	setProject,
+	setPlotPath,
+	getPlotPath,
 } from './store-actions';
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
+import { createChildWindow } from './create-window';
 
 export default {
 	initialize() {
@@ -56,6 +59,7 @@ export default {
 				appMenu: serializeMenu(Menu.getApplicationMenu()),
 				modals: getOpenModals(),
 				project: getProject(),
+				plotPath: getPlotPath(),
 			};
 		});
 
@@ -119,7 +123,7 @@ export default {
 			},
 		);
 
-		ipcMain.on(
+		ipcMain.handle(
 			ipcChannels.CREATE_FILE,
 			(_event: any, directory: string, content: any, encoding = 'utf8') => {
 				fs.writeFileSync(directory, content, encoding);
@@ -162,6 +166,15 @@ export default {
 			if (!window) throw new Error('Main window is not available');
 
 			return dialog.showOpenDialog(window, { properties: ['openDirectory'] });
+		});
+
+		ipcMain.handle(ipcChannels.OPEN_PLOT_WINDOW, async (_event: any) => {
+			if (windows.childWindow) windows.childWindow.close();
+			windows.childWindow = await createChildWindow();
+		});
+
+		ipcMain.on(ipcChannels.SET_PLOT_PATH, (_event: any, plotPath: string) => {
+			setPlotPath(plotPath);
 		});
 	},
 };

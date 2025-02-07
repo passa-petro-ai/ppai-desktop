@@ -17,6 +17,7 @@ import sounds from './sounds';
 import tray from './tray';
 import { debugInfo, is } from './util';
 import windows from './windows';
+import dialog from './dialog';
 
 export const startup = () => {
 	console.timeLog(app.name, $init.startup);
@@ -94,7 +95,6 @@ export const idle = async () => {
 	// windows.childWindow = await createChildWindow();
 
 	// ... do something with your app
-
 	Logger.status($init.idle);
 	console.timeLog(app.name, $init.idle);
 };

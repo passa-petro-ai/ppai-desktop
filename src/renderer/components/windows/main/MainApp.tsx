@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 // Component for the main window of the PPAI Desktop demo
+// eslint-disable-next-line react/function-component-definition
 const MainApp: React.FC = () => {
 	const [message, setMessage] = useState<string>('');
 

@@ -45,7 +45,6 @@ const createWindow = (opts?: BrowserWindowConstructorOptions) => {
 		minWidth: 550,
 		height: APP_HEIGHT,
 		minHeight: 420,
-
 		// Conditionally enable features based on the platform
 		// https://www.electronjs.org/docs/api/browser-window#new-browserwindowoptions
 		// ...(is.windows ? { type: 'toolbar' } : {}),
@@ -67,10 +66,15 @@ const createWindow = (opts?: BrowserWindowConstructorOptions) => {
 		preload: app.isPackaged
 			? path.join(__dirname, 'preload.js')
 			: path.join(__dirname, '../../.erb/dll/preload.js'),
+		sandbox: false,
 		// Todo: secure
 		// contextIsolation: false, // Ensure context isolation
 		nodeIntegration: true, // Disable Node.js integration
-		nodeIntegrationInWorker: true,
+		// nodeIntegrationInWorker: true,
+		// webgl: true,
+		// contextIsolation: false,
+		// offscreen: false, // Ensure WebGL rendering is enabled
+		// experimentalFeatures: true,
 	};
 
 	const browserWindow = new BrowserWindow(options);
@@ -114,13 +118,13 @@ export const createMainWindow = async () => {
 		// alwaysOnTop: true,
 		show: false,
 		// skipTaskbar: true, // Whether to show the window in taskbar. Default is false.
-		titleBarStyle: 'hidden', // 'default', 'hidden', 'hiddenInset', 'customButtonsOnHover
+		titleBarStyle: 'default', // 'default', 'hidden', 'hiddenInset', 'customButtonsOnHover
 		// titleBarOverlay: true, // https://developer.mozilla.org/en-US/docs/Web/API/Window_Controls_Overlay_API
 		trafficLightPosition: { x: 10, y: 9 },
 
-		transparent: true, // Makes the window transparent. Default is false. On Windows, does not work unless the window is frameless.
+		transparent: false, // Makes the window transparent. Default is false. On Windows, does not work unless the window is frameless.
 		// backgroundColor: '#00000000', // transparent hexadecimal or anything with transparency,
-		vibrancy: 'under-window', // appearance-based, titlebar, selection, menu, popover, sidebar, header, sheet, window, hud, fullscreen-ui, tooltip, content, under-window, or under-page.
+		vibrancy: 'titlebar', // appearance-based, titlebar, selection, menu, popover, sidebar, header, sheet, window, hud, fullscreen-ui, tooltip, content, under-window, or under-page.
 
 		width: APP_WIDTH,
 		minWidth: 550,
@@ -154,7 +158,12 @@ export const createMainWindow = async () => {
 };
 
 export const createChildWindow = async () => {
-	const window = createWindow({ frame: true });
+	const window = createWindow({
+		frame: true,
+		width: 800,
+		height: 600,
+		autoHideMenuBar: true,
+	});
 
 	window.on('ready-to-show', () => {
 		window.show();

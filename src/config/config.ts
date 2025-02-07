@@ -10,6 +10,7 @@ export const APP_BACKGROUND_OPACITY = 0.6;
 export const APP_MESSAGES_MAX = 100;
 
 export const PROTOCOL = 'ppai-desktop'; // Custom app protocol handler for Electron, e.g. `app://`
+export const PROJECT_PROTOCOL = 'ppai-project';
 
 export const VOLUME = 0.15; // System volume in percent
 

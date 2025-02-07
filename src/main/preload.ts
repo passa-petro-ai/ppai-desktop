@@ -68,7 +68,7 @@ const electronHandler = {
 		return ipcRenderer.invoke(ipcChannels.CHECK_FILE_DIRECTORY, directory);
 	},
 	createFile(directory: string, content: string, encoding = 'utf8') {
-		ipcRenderer.send(ipcChannels.CREATE_FILE, directory, content, encoding);
+		return ipcRenderer.invoke(ipcChannels.CREATE_FILE, directory, content, encoding);
 	},
 	readFile(path: string, encoding: string = 'utf8') {
 		return ipcRenderer.invoke(ipcChannels.READ_FILE, path, encoding);
@@ -81,6 +81,12 @@ const electronHandler = {
 	},
 	findFileDirectory() {
 		return ipcRenderer.invoke(ipcChannels.FIND_FILE_DIRECTORY);
+	},
+	openPlotWindow() {
+		return ipcRenderer.invoke(ipcChannels.OPEN_PLOT_WINDOW);
+	},
+	setPlotPath(plotPath: string) {
+		ipcRenderer.send(ipcChannels.SET_PLOT_PATH, plotPath);
 	},
 };
 

@@ -1,60 +1,45 @@
-import { Badge } from '@/components/ui/badge';
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { getTrace } from '@/main/plotter';
 import { useGlobalContext } from '@/renderer/context/global-context';
 import '@/renderer/styles/globals.scss';
-
-// Component to display a single setting
-function SettingItem({ name, value }: { name: string; value: any }) {
-	return (
-		<div className="flex justify-between items-center py-3 border-b last:border-b-0">
-			<span className="font-medium">{name}</span>
-			<Badge
-				variant={
-					typeof value === 'boolean'
-						? value
-							? 'success'
-							: 'destructive'
-						: 'default'
-				}
-			>
-				{value.toString()}
-			</Badge>
-		</div>
-	);
-}
+import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Plotly from 'react-plotly.js';
 
 function ChildApp() {
-	const { settings } = useGlobalContext();
+	const { plotPath } = useGlobalContext();
+
+	const [data, setData] = useState<any>(null);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+
+	const loadVelocityModelTrace = async () => {
+		setIsLoading(true);
+		const modelInputFilePath = plotPath;
+
+		const trace = await getTrace(modelInputFilePath);
+		setData(trace);
+		console.log({ trace });
+		setIsLoading(false);
+	};
+
+	useEffect(() => {
+		if (plotPath) loadVelocityModelTrace();
+	}, [plotPath]);
 
 	return (
-		<div className="p-6 h-screen bg-gradient-to-br from-background to-secondary/10 text-foreground flex items-center justify-center">
-			<Card className="w-full max-w-2xl mx-auto shadow-lg">
-				<CardHeader className="space-y-1">
-					<CardTitle className="text-2xl font-bold">
-						Application Settings
-					</CardTitle>
-					<CardDescription>
-						View and manage your application settings. These settings affect
-						various aspects of the application's behavior and appearance.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<ScrollArea className="h-[60vh] pr-4">
-						<div className="space-y-2">
-							{Object.entries(settings).map(([key, value]) => (
-								<SettingItem key={key} name={key} value={value} />
-							))}
-						</div>
-					</ScrollArea>
-				</CardContent>
-			</Card>
+		<div className="w-[100vw] h-[100vh]">
+			{(!plotPath || isLoading) && <Loader2 className="animate-spin" />}
+			{plotPath && (
+				<Plotly
+					layout={{
+						responsive: true,
+						autosize: true,
+						title: { text: plotPath },
+					}}
+					data={[{ ...data }]}
+					style={{ width: '100%', height: '100%' }}
+					useResizeHandler
+				/>
+			)}
 		</div>
 	);
 }

@@ -49,7 +49,7 @@ const openAboutDialog = () => {
 		copyright: `🎯 CrossOver ${app.getVersion()} | Copyright © Gerardo Maranan`,
 		text: `A crosshair overlay for any screen. Feedback and bug reports welcome. Created by Gerardo Maranan. Crosshairs thanks to /u/IrisFlame. ${
 			is.development && ` | ${debugInfo()}`
-		} GPU: ${app.getGPUFeatureStatus().gpu_compositing}`,
+		} GPU: ${app.getGPUFeatureStatus()}`,
 	});
 };
 
