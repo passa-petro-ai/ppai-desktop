@@ -441,7 +441,7 @@ export function FwiDomain() {
 					/>
 					<Separator />
 					<h4 className="text-md font-medium leading-none">Summary</h4>
-					<div className="columns-2 min-w-[384px] max-w-[768px]">
+					<div className="columns-2 min-w-[384px] max-w-[768px] space-y-4">
 						<FormField
 							control={form.control}
 							name="numberOfSources"

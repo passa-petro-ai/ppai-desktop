@@ -33,3 +33,4 @@ export const DEBOUNCE_DELAY = 800;
 // ];
 
 export const PROJECTS_DIRECTORY = 'Projects';
+export const DEFAULT_PLOTLY_COLORSCALE = 'Viridis';

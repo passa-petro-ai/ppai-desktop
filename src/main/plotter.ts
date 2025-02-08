@@ -1,5 +1,6 @@
 /* eslint-disable no-plusplus */
 import * as plotly from 'plotly.js-dist';
+import { DEFAULT_PLOTLY_COLORSCALE } from '@/config/config';
 import { createFile, readFile } from './files';
 
 export const getTrace = async (inputPath: string) => {
@@ -36,7 +37,7 @@ export const getTrace = async (inputPath: string) => {
 			x: Array.from({ length: n2 }, (_, i) => i * d2),
 			y: Array.from({ length: n1 }, (_, i) => i * d1),
 			type: 'heatmap',
-			colorscale: 'Earth',
+			colorscale: DEFAULT_PLOTLY_COLORSCALE,
 		};
 
 		return trace;
@@ -79,7 +80,7 @@ export const render = async (inputPath: string, outputPath: string) => {
 			x: Array.from({ length: n2 }, (_, i) => i * d2),
 			y: Array.from({ length: n1 }, (_, i) => i * d1),
 			type: 'heatmap',
-			colorscale: 'Earth',
+			colorscale: DEFAULT_PLOTLY_COLORSCALE,
 		};
 
 		const layout = {

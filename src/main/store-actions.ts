@@ -179,6 +179,5 @@ export const getPtyData = () => {
 };
 
 export const setPtyData = (ptyData: string) => {
-	console.log({ ptyData });
 	return store.set('ptyData', ptyData);
 };

@@ -37,6 +37,16 @@ interface GlobalContextType {
 	isLoading: boolean;
 	plotPath: string;
 	setPlotPath: (plotPath: string) => void;
+	setIsExecuting: (isExecuting: boolean) => void;
+	isExecuting: boolean;
+	setIsDomainValid: (isDomainValid: boolean) => void;
+	isDomainValid: boolean;
+	setIsOperationValid: (isOperationValid: boolean) => void;
+	isOperationValid: boolean;
+	setIsFrequencyValid: (isFrequencyValid: boolean) => void;
+	isFrequencyValid: boolean;
+	setIsParallelizationValid: (isParallelizationValid: boolean) => void;
+	isParallelizationValid: boolean;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -56,6 +66,16 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	isLoading: false,
 	plotPath: '',
 	setPlotPath: () => { },
+	setIsExecuting: () => { },
+	isExecuting: false,
+	setIsDomainValid: () => { },
+	isDomainValid: false,
+	setIsOperationValid: () => { },
+	isOperationValid: false,
+	setIsFrequencyValid: () => { },
+	isFrequencyValid: false,
+	setIsParallelizationValid: () => { },
+	isParallelizationValid: false,
 });
 
 export function GlobalContextProvider({
@@ -69,6 +89,7 @@ export function GlobalContextProvider({
 	);
 	const [messages, setMessages] = React.useState<string[]>([]);
 	const [isLoading, setIsLoading] = React.useState<boolean>(false);
+	const [isExecuting, setIsExecuting] = React.useState<boolean>(false);
 
 	const [settings, setCurrentSettings] =
 		React.useState<SettingsType>(DEFAULT_SETTINGS);
@@ -79,6 +100,14 @@ export function GlobalContextProvider({
 	const [modals, setCurrentModals] = React.useState<OpenModalsTrackerType>([]);
 	const [project, setCurrentProject] = React.useState<Project | null>(null);
 	const [plotPath, setCurrentPlotPath] = React.useState<any>(null);
+
+	const [isDomainValid, setIsDomainValid] = React.useState<boolean>(false);
+	const [isOperationValid, setIsOperationValid] =
+		React.useState<boolean>(false);
+	const [isFrequencyValid, setIsFrequencyValid] =
+		React.useState<boolean>(false);
+	const [isParallelizationValid, setIsParallelizationValid] =
+		React.useState<boolean>(false);
 
 	useEffect(() => {
 		// Create handler for receiving asynchronous messages from the main process
@@ -94,7 +123,6 @@ export function GlobalContextProvider({
 						modals: d,
 						project: p,
 						plotPath: pd,
-						ptyData: pt,
 					} = res;
 
 					setCurrentSettings(s);
@@ -117,8 +145,6 @@ export function GlobalContextProvider({
 		window.electron.ipcRenderer.on(
 			ipcChannels.APP_NOTIFICATION,
 			({ title, body, action }: any) => {
-				window.location.href = '#fwi';
-
 				toast(title, {
 					...(body ? { description: body } : {}),
 					...(action ? { action } : {}),
@@ -209,6 +235,16 @@ export function GlobalContextProvider({
 			isLoading,
 			plotPath,
 			setPlotPath,
+			setIsExecuting,
+			isExecuting,
+			setIsDomainValid,
+			isDomainValid,
+			setIsOperationValid,
+			isOperationValid,
+			setIsFrequencyValid,
+			isFrequencyValid,
+			setIsParallelizationValid,
+			isParallelizationValid,
 		};
 	}, [
 		appInfo,
@@ -226,6 +262,16 @@ export function GlobalContextProvider({
 		isLoading,
 		plotPath,
 		setPlotPath,
+		setIsExecuting,
+		isExecuting,
+		setIsDomainValid,
+		isDomainValid,
+		setIsOperationValid,
+		isOperationValid,
+		setIsFrequencyValid,
+		isFrequencyValid,
+		setIsParallelizationValid,
+		isParallelizationValid,
 	]);
 
 	return (

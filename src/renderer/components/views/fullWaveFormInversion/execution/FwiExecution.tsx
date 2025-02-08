@@ -7,20 +7,9 @@ export function FwiExecution() {
 	const { instance, ref } = useXTerm();
 	const fitAddon = new FitAddon();
 
-	const onData = (data: string) => {
-		console.log(`Received Data: ${data}`);
-	};
-
-	const onResize = (cols: number, rows: number) => {
-		console.log(`Terminal resized to ${cols} columns and ${rows} rows`);
-	};
-
 	useEffect(() => {
 		instance?.loadAddon(fitAddon);
 		const handleResize = () => fitAddon.fit();
-
-		instance?.onData((data) => onData(data));
-		instance?.onResize((size) => onResize(size.cols, size.rows));
 
 		window.electron.ipcRenderer.on(ipcChannels.SET_PTY_DATA, (data: string) => {
 			instance?.write(data);
@@ -33,7 +22,7 @@ export function FwiExecution() {
 			window.removeEventListener('resize', handleResize);
 			window.electron.ipcRenderer.removeAllListeners(ipcChannels.SET_PTY_DATA);
 		};
-	}, [ref, instance]);
+	}, [ref, instance, fitAddon]);
 
 	return (
 		<div className="space-y-6">

@@ -63,7 +63,6 @@ export default {
 				modals: getOpenModals(),
 				project: getProject(),
 				plotPath: getPlotPath(),
-				ptyDta: getPtyData(),
 			};
 		});
 
@@ -173,7 +172,6 @@ export default {
 		});
 
 		ipcMain.handle(ipcChannels.OPEN_PLOT_WINDOW, async (_event: any) => {
-			if (windows.childWindow) windows.childWindow.close();
 			windows.childWindow = null;
 			windows.childWindow = await createChildWindow();
 		});
