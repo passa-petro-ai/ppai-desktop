@@ -22,6 +22,7 @@ import {
 	checkFileDirectory,
 	createFile,
 	findFile,
+	findFileDirectory,
 	readFile,
 } from '@/main/files';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ import { useEffect, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { refinePathValidator } from '@/utils/refinePathValidator';
+import { Table, TableCaption, TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from '@/components/ui/table';
 
 const GroupFormSchema = z.object({
 	start: z.coerce.number().positive(),
@@ -61,6 +63,8 @@ export function FwiFrequency() {
 
 	const [frequencyValues, setFrequencyValues] =
 		useState<Frequency>(FREQUENCY_DEFAULTS);
+
+	const [frequencies, setFrequencies] = useState<string[]>([]);
 
 	const groupForm = useForm<z.infer<typeof GroupFormSchema>>({
 		resolver: zodResolver(GroupFormSchema),
@@ -127,8 +131,33 @@ export function FwiFrequency() {
 		});
 	};
 
+	const loadFrequencies = async () => {
+		const FREQUENCIES_TXT = 'frequency.txt';
+		const csgfDirectory = frequencyForm.getValues('csgfDirectory');
+		const frequenciesFilePath = `${csgfDirectory}/${FREQUENCIES_TXT}`;
+
+		const isFrequenciesFileExisting = await checkFileDirectory(frequenciesFilePath);
+
+		if (!isFrequenciesFileExisting) {
+			toast.error('Could not find frequencies.txt file.')
+			setFrequencies([]);
+			return;
+		}
+
+		const frequenciesFileContent: string = await readFile(frequenciesFilePath, 'utf8');
+
+		try {
+			const formatted = frequenciesFileContent.replaceAll(',', ', ');
+			const values = formatted.split('\n');
+			setFrequencies(values);
+			toast.info('Loaded frequency.txt File');
+		} catch {
+			toast.error('The frequency.txt file is possibly malformed.');
+		}
+	};
+
 	const onFindFileDirectory = async (field: any) => {
-		const directory = await findFile();
+		const directory = await findFileDirectory();
 		const isCancelled = directory.canceled;
 
 		if (isCancelled) {
@@ -138,6 +167,7 @@ export function FwiFrequency() {
 		if (directory?.filePaths?.length) {
 			const path = directory.filePaths[0];
 			frequencyForm.setValue(field, path);
+			loadFrequencies();
 		}
 	};
 
@@ -160,6 +190,10 @@ export function FwiFrequency() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [project]);
 
+	useEffect(() => {
+		if (frequencyValues.csgfDirectory) loadFrequencies();
+	}, [frequencyValues])
+
 	return (
 		<div className="space-y-6">
 			<div>
@@ -176,17 +210,18 @@ export function FwiFrequency() {
 						control={frequencyForm.control}
 						name="csgfDirectory"
 						render={({ field }) => (
-							<FormItem>
+							<FormItem onBlur={loadFrequencies}>
 								<FormLabel className="text-right col-span-1">
-									CSGF Out Directory
+									CSGF Directory
 								</FormLabel>
 								<div className="flex w-full max-w-sm items-center space-x-2">
 									<FormControl>
-										<Input placeholder="CSGF Out Directory" {...field} />
+										<Input placeholder="CSGF Directory" {...field} />
 									</FormControl>
 									<Button
 										variant="secondary"
 										className="col-span-1"
+										type="button"
 										onClick={() => onFindFileDirectory(field.name)}
 									>
 										Find
@@ -197,84 +232,105 @@ export function FwiFrequency() {
 						)}
 					/>
 					<Separator className="my-6" />
-					<ScrollArea className="h-72 w-4/6 rounded-md border px-4 py-2">
-						{fields.map((field, index) => {
-							return (
-								<div key={field.id}>
-									<div className="flex w-full max-w-sm items-end space-x-4 mb-4">
-										<FormLabel className="w-48 self-center">
-											Group {index + 1}
-										</FormLabel>
-										<FormField
-											control={frequencyForm.control}
-											name={`frequencies.${index}.start`}
-											render={({ field: startField }) => {
-												return (
-													<FormItem className="mt-2">
-														<FormControl>
-															<Input
-																type="number"
-																placeholder="Start"
-																{...startField}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												);
-											}}
-										/>
-										<FormField
-											control={frequencyForm.control}
-											name={`frequencies.${index}.end`}
-											render={({ field: endField }) => {
-												return (
-													<FormItem className="mt-2">
-														<FormControl>
-															<Input
-																type="number"
-																placeholder="End"
-																{...endField}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												);
-											}}
-										/>
-										<FormField
-											control={frequencyForm.control}
-											name={`frequencies.${index}.increment`}
-											render={({ field: incrementField }) => {
-												return (
-													<FormItem className="mt-2">
-														<FormControl>
-															<Input
-																type="number"
-																placeholder="Increment"
-																{...incrementField}
-															/>
-														</FormControl>
-														<FormMessage />
-													</FormItem>
-												);
-											}}
-										/>
-										<Button
-											type="button"
-											size="icon"
-											variant="destructive"
-											className="p-2"
-											onClick={() => {
-												remove(index);
-											}}
-										>
-											<Minus />
-										</Button>
-									</div>
+					{frequencies.length > 0 &&
+						(<div className="space-y-4">
+							<span className="text-sm text-muted-foreground inline mr-2">Number of Frequency:</span>
+							<span className="text-sm font-bold">{frequencies.length}</span>
+
+							<ScrollArea className="h-72 w-4/6 rounded-md border px-4 py-2">
+								<div className="grid grid-cols-3 gap-2 py-4 font-mono text-xs">
+									{frequencies.map((frequency, index) => {
+										if (!frequency) return;
+										return (
+											<div className="grid grid-cols-4 border rounded">
+												<div className="col-span-1 border-e text-center p-2">{index}</div>
+												<div className="col-span-3 py-2 pl-2">{frequency}</div>
+											</div>
+										)
+									})}
 								</div>
-							);
-						})}
-					</ScrollArea>
+
+							</ScrollArea>
+							<ScrollArea className="h-72 w-4/6 rounded-md border px-4 py-2">
+								{fields.map((field, index) => {
+									return (
+										<div key={field.id}>
+											<div className="flex w-full max-w-sm items-end space-x-4 mb-4">
+												<FormLabel className="w-48 self-center">
+													Group {index + 1}
+												</FormLabel>
+												<FormField
+													control={frequencyForm.control}
+													name={`frequencies.${index}.start`}
+													render={({ field: startField }) => {
+														return (
+															<FormItem className="mt-2">
+																<FormControl>
+																	<Input
+																		type="number"
+																		placeholder="Start"
+																		{...startField}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														);
+													}}
+												/>
+												<FormField
+													control={frequencyForm.control}
+													name={`frequencies.${index}.end`}
+													render={({ field: endField }) => {
+														return (
+															<FormItem className="mt-2">
+																<FormControl>
+																	<Input
+																		type="number"
+																		placeholder="End"
+																		{...endField}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														);
+													}}
+												/>
+												<FormField
+													control={frequencyForm.control}
+													name={`frequencies.${index}.increment`}
+													render={({ field: incrementField }) => {
+														return (
+															<FormItem className="mt-2">
+																<FormControl>
+																	<Input
+																		type="number"
+																		placeholder="Increment"
+																		{...incrementField}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														);
+													}}
+												/>
+												<Button
+													type="button"
+													size="icon"
+													variant="destructive"
+													className="p-2"
+													onClick={() => {
+														remove(index);
+													}}
+												>
+													<Minus />
+												</Button>
+											</div>
+										</div>
+									);
+								})}
+							</ScrollArea>
+						</div>)
+					}
 
 					<Form {...groupForm}>
 						<form className="space-y-5">

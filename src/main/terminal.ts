@@ -15,13 +15,12 @@ const spawn = () => {
 		env: process.env,
 	});
 
-	ptyProcess.onData((data) => {
-		process.stdout.write(data);
-		windows.mainWindow?.webContents.send(ipcChannels.SET_PTY_DATA, data);
-	});
-
 	ipcMain.on(ipcChannels.RUN_PTY_COMMAND, (_event: any, data) => {
 		ptyProcess.write(data);
+	});
+
+	ptyProcess.onData((data) => {
+		windows.mainWindow?.webContents.send(ipcChannels.SET_PTY_DATA, data);
 	});
 
 	ipcMain.on(ipcChannels.TERMINATE_PTY_PROCESS, (_event: any) => {

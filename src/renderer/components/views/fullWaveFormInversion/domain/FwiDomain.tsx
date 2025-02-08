@@ -25,6 +25,7 @@ import {
 	findFile,
 	checkFileDirectory,
 	createFileDirectory,
+	findFileDirectory,
 } from '@/main/files';
 import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 import { Domain } from '@/types/fwi/domain';
@@ -155,7 +156,7 @@ export function FwiDomain() {
 	};
 
 	const onFindFileDirectory = async (field: any) => {
-		const directory = await findFile();
+		const directory = await findFileDirectory();
 		const isCancelled = directory.canceled;
 
 		if (isCancelled) {

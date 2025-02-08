@@ -2,13 +2,17 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { checkFileDirectory, readFile } from '@/main/files';
 import { ScrollArea } from '@/renderer/components/ui/ScrollPane';
 import { SidebarNav } from '@/renderer/components/ui/SidebarNav';
 import { fwiNavItems, nav } from '@/renderer/config/nav';
 import { useGlobalContext } from '@/renderer/context/global-context';
+import { Parallelization } from '@/types/fwi/parallelization';
+import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 import { Loader2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface FwiLayoutProps {
 	children?: React.ReactNode;
@@ -16,19 +20,69 @@ interface FwiLayoutProps {
 
 export default function FwiLayout({ children }: FwiLayoutProps) {
 	const { pathname: location } = useLocation(); // We use this to reset the scroll position when the location changes
-	const { isExecuting, setIsExecuting } = useGlobalContext();
+	const { project, isExecuting, setIsExecuting } = useGlobalContext();
 	const [isAutoRestart, setIsAutoRestart] = useState<boolean>(false);
 
-	const onExecute = () => {
+	const onExecute = async () => {
+		console.log('Executing');
 		if (isExecuting) return;
+
+		const parallelizationValues = await fetchParallelizationValues();
+
+		if (!parallelizationValues) {
+			toast.error('The configuration file is possibly malformed.');
+			return;
+		}
+
 		window.electron.spawnPtyProcess();
-		window.electron.runPtyCommand('ping 192.168.0.1\r');
+		// window.electron.runPtyCommand('ping 192.168.0.1\r');
+
+		const npValue =
+			parallelizationValues?.numberOfComputingNodes *
+			parallelizationValues?.numberOfCoresPerComputingNode;
+
+		const ppnValue = parallelizationValues?.numberOfCoresPerComputingNode;
+		const command = `mpiexec –np ${npValue} –ppn ${ppnValue} AcousticFWI2D.e\r`;
+
+		window.electron.runPtyCommand(command);
 		setIsExecuting(true);
 	};
 
 	const onCancel = () => {
 		window.electron.terminatePtyProcess();
 		setIsExecuting(false);
+	};
+
+	const fetchParallelizationValues = async () => {
+		const FILE_NAME = 'parallelization.json';
+
+		if (project == null || !project.name) {
+			toast.error('Project could not be found.');
+			return;
+		}
+
+		const baseProjectPath = getBaseProjectPath(project?.name);
+		const path = `${baseProjectPath}/${FILE_NAME}`;
+
+		const isExisting = await checkFileDirectory(path);
+		if (!isExisting) {
+			toast.error("Please configure Parallelization values.");
+		}
+
+		const content: string = await readFile(path);
+
+		if (!content) {
+			toast.error('There was an error loading configuration file.');
+		}
+
+		try {
+			const values: Parallelization = JSON.parse(content);
+			console.log({ values })
+			return values;
+		} catch {
+			toast.error('The configuration file is possibly malformed.');
+			return null;
+		}
 	};
 
 	return (
