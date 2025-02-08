@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/renderer/components/ui/ScrollPane';
 import { SidebarNav } from '@/renderer/components/ui/SidebarNav';
 import { fwiNavItems, nav } from '@/renderer/config/nav';
+import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
@@ -19,6 +20,19 @@ export default function FwiLayout({ children }: FwiLayoutProps) {
 	const [isAutoRestart, setIsAutoRestart] = useState<boolean>(false);
 	const [iterations, setIterations] = useState<number>(1);
 	const [frequencyGroup, setFrequencyGroup] = useState<number>(1);
+	const [isExecuting, setIsExecuting] = useState<boolean>(false);
+
+	const onExecute = () => {
+		if (isExecuting) return;
+		window.electron.spawnPtyProcess();
+		window.electron.runPtyCommand('ping 192.168.0.1\r');
+		setIsExecuting(true);
+	};
+
+	const onCancel = () => {
+		window.electron.terminatePtyProcess();
+		setIsExecuting(false);
+	};
 
 	return (
 		<>
@@ -82,7 +96,22 @@ export default function FwiLayout({ children }: FwiLayoutProps) {
 						<Button variant="secondary">
 							<Link to={nav.home.href}>Back</Link>
 						</Button>
-						<Button variant="outline">Run</Button>
+						{!isExecuting && (
+							<Button variant="outline" onClick={onExecute}>
+								Run
+							</Button>
+						)}
+						{isExecuting && (
+							<Button variant="destructive" onClick={onCancel}>
+								Cancel
+							</Button>
+						)}
+						{isExecuting && (
+							<div className="flex items-center space-x-2">
+								<Loader2 size={14} className="animate-spin mr-2 inline" />
+								Running
+							</div>
+						)}
 					</div>
 				</div>
 			</div>

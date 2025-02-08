@@ -46,16 +46,16 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	message: '',
 	messages: [],
 	settings: DEFAULT_SETTINGS,
-	setSettings: () => {},
+	setSettings: () => { },
 	modals: [],
-	openModal: () => {},
-	closeModal: () => {},
+	openModal: () => { },
+	closeModal: () => { },
 	project: null,
-	setProject: () => {},
-	setIsLoading: () => {},
+	setProject: () => { },
+	setIsLoading: () => { },
 	isLoading: false,
 	plotPath: '',
-	setPlotPath: () => {},
+	setPlotPath: () => { },
 });
 
 export function GlobalContextProvider({
@@ -94,6 +94,7 @@ export function GlobalContextProvider({
 						modals: d,
 						project: p,
 						plotPath: pd,
+						ptyData: pt,
 					} = res;
 
 					setCurrentSettings(s);
@@ -165,6 +166,7 @@ export function GlobalContextProvider({
 			window.electron.ipcRenderer.removeAllListeners(
 				ipcChannels.APP_NOTIFICATION,
 			);
+			window.electron.ipcRenderer.removeAllListeners(ipcChannels.SET_PTY_DATA);
 		};
 	}, []);
 

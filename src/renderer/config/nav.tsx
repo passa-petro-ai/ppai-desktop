@@ -12,6 +12,7 @@ import {
 	TargetIcon,
 	BarChartIcon,
 	MixerHorizontalIcon,
+	LightningBoltIcon,
 } from '@radix-ui/react-icons';
 
 import { SettingsApplication } from '@/renderer/components/views/settings/general/SettingsApplication';
@@ -21,6 +22,7 @@ import { FwiDomain } from '@/renderer/components/views/fullWaveFormInversion/dom
 import { FwiOperation } from '@/renderer/components/views/fullWaveFormInversion/operation/FwiOperation';
 import { FwiFrequency } from '@/renderer/components/views/fullWaveFormInversion/frequency/FwiFrequency';
 import { FwiParallelization } from '../components/views/fullWaveFormInversion/parallelization/FwiParallelization';
+import { FwiExecution } from '../components/views/fullWaveFormInversion/execution/FwiExecution';
 
 export const nav = {
 	home: {
@@ -104,5 +106,11 @@ export const fwiNavItems = [
 		href: 'parallelization',
 		element: <FwiParallelization />,
 		icon: MixerHorizontalIcon,
+	},
+	{
+		title: 'Execution',
+		href: 'execution',
+		element: <FwiExecution />,
+		icon: LightningBoltIcon,
 	},
 ];

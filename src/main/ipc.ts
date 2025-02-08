@@ -22,11 +22,14 @@ import {
 	setProject,
 	setPlotPath,
 	getPlotPath,
+	setPtyData,
+	getPtyData,
 } from './store-actions';
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
 import windows from './windows';
 import { createChildWindow } from './create-window';
+import terminal from './terminal';
 
 export default {
 	initialize() {
@@ -60,6 +63,7 @@ export default {
 				modals: getOpenModals(),
 				project: getProject(),
 				plotPath: getPlotPath(),
+				ptyDta: getPtyData(),
 			};
 		});
 
@@ -170,11 +174,20 @@ export default {
 
 		ipcMain.handle(ipcChannels.OPEN_PLOT_WINDOW, async (_event: any) => {
 			if (windows.childWindow) windows.childWindow.close();
+			windows.childWindow = null;
 			windows.childWindow = await createChildWindow();
 		});
 
 		ipcMain.on(ipcChannels.SET_PLOT_PATH, (_event: any, plotPath: string) => {
 			setPlotPath(plotPath);
+		});
+
+		ipcMain.on(ipcChannels.SET_PTY_DATA, (_event: any, ptyData: string) => {
+			setPtyData(ptyData);
+		});
+
+		ipcMain.on(ipcChannels.SPAWN_PTY_PROCESS, (_event: any) => {
+			terminal.spawn();
 		});
 	},
 };

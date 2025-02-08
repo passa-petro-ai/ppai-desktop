@@ -68,7 +68,12 @@ const electronHandler = {
 		return ipcRenderer.invoke(ipcChannels.CHECK_FILE_DIRECTORY, directory);
 	},
 	createFile(directory: string, content: string, encoding = 'utf8') {
-		return ipcRenderer.invoke(ipcChannels.CREATE_FILE, directory, content, encoding);
+		return ipcRenderer.invoke(
+			ipcChannels.CREATE_FILE,
+			directory,
+			content,
+			encoding,
+		);
 	},
 	readFile(path: string, encoding: string = 'utf8') {
 		return ipcRenderer.invoke(ipcChannels.READ_FILE, path, encoding);
@@ -87,6 +92,15 @@ const electronHandler = {
 	},
 	setPlotPath(plotPath: string) {
 		ipcRenderer.send(ipcChannels.SET_PLOT_PATH, plotPath);
+	},
+	runPtyCommand(data: string) {
+		ipcRenderer.send(ipcChannels.RUN_PTY_COMMAND, data);
+	},
+	terminatePtyProcess() {
+		ipcRenderer.send(ipcChannels.TERMINATE_PTY_PROCESS);
+	},
+	spawnPtyProcess() {
+		ipcRenderer.send(ipcChannels.SPAWN_PTY_PROCESS);
 	},
 };
 

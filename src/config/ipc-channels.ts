@@ -27,8 +27,12 @@ const CREATE_FILE = 'create-file';
 const FIND_FILE = 'find-file';
 const READ_FILE = 'read-file';
 const SET_PROJECT = 'set-project';
-const SET_PLOT_DATA = 'set-plot-data';
+const SET_PLOT_PATH = 'set-plot-path';
 const OPEN_PLOT_WINDOW = 'open-plot-window';
+const SET_PTY_DATA = 'set-pty-data';
+const RUN_PTY_COMMAND = 'run-pty-command';
+const TERMINATE_PTY_PROCESS = 'terminate-pty-process';
+const SPAWN_PTY_PROCESS = 'spawn-pty-process';
 
 export const ipcChannels = {
 	// main -> renderer
@@ -36,6 +40,8 @@ export const ipcChannels = {
 	APP_UPDATED,
 	PRELOAD_SOUNDS,
 	PLAY_SOUND,
+	SET_PTY_DATA,
+	RUN_PTY_COMMAND,
 
 	// renderer -> main
 	RENDERER_READY,
@@ -56,6 +62,8 @@ export const ipcChannels = {
 	CREATE_FILE,
 	FIND_FILE,
 	SET_PROJECT,
-	SET_PLOT_PATH: SET_PLOT_DATA,
+	SET_PLOT_PATH,
 	OPEN_PLOT_WINDOW,
+	TERMINATE_PTY_PROCESS,
+	SPAWN_PTY_PROCESS,
 };

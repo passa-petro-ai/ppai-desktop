@@ -173,3 +173,12 @@ export const getPlotPath = () => {
 export const setPlotPath = (plotData: any) => {
 	return store.set('plotPath', plotData);
 };
+
+export const getPtyData = () => {
+	return store.get('ptyData');
+};
+
+export const setPtyData = (ptyData: string) => {
+	console.log({ ptyData });
+	return store.set('ptyData', ptyData);
+};
