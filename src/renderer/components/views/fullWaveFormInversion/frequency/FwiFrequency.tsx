@@ -30,7 +30,6 @@ import { useEffect, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { refinePathValidator } from '@/utils/refinePathValidator';
-import { Table, TableCaption, TableHeader, TableRow, TableHead, TableBody, TableCell, TableFooter } from '@/components/ui/table';
 
 const GroupFormSchema = z.object({
 	start: z.coerce.number().positive(),
@@ -136,17 +135,21 @@ export function FwiFrequency() {
 		const csgfDirectory = frequencyForm.getValues('csgfDirectory');
 		const frequenciesFilePath = `${csgfDirectory}/${FREQUENCIES_TXT}`;
 
-		const isFrequenciesFileExisting = await checkFileDirectory(frequenciesFilePath);
+		const isFrequenciesFileExisting =
+			await checkFileDirectory(frequenciesFilePath);
 
 		if (!isFrequenciesFileExisting) {
-			toast.error('Could not find frequencies.txt file.')
+			toast.error('Could not find frequencies.txt file.');
 			setFrequencies([]);
 			return;
 		}
 
-		const frequenciesFileContent: string = await readFile(frequenciesFilePath, 'utf8');
-
 		try {
+			const frequenciesFileContent: string = await readFile(
+				frequenciesFilePath,
+				'utf8',
+			);
+
 			const formatted = frequenciesFileContent.replaceAll(',', ', ');
 			const values = formatted.split('\n');
 			setFrequencies(values);
@@ -192,7 +195,7 @@ export function FwiFrequency() {
 
 	useEffect(() => {
 		if (frequencyValues.csgfDirectory) loadFrequencies();
-	}, [frequencyValues])
+	}, [frequencyValues, project])
 
 	return (
 		<div className="space-y-6">

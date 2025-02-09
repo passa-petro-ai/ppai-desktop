@@ -88,7 +88,7 @@ const electronHandler = {
 		return ipcRenderer.invoke(ipcChannels.FIND_FILE_DIRECTORY);
 	},
 	openPlotWindow() {
-		return ipcRenderer.invoke(ipcChannels.OPEN_PLOT_WINDOW);
+		ipcRenderer.send(ipcChannels.OPEN_PLOT_WINDOW);
 	},
 	setPlotPath(plotPath: string) {
 		ipcRenderer.send(ipcChannels.SET_PLOT_PATH, plotPath);
@@ -102,6 +102,15 @@ const electronHandler = {
 	spawnPtyProcess() {
 		ipcRenderer.send(ipcChannels.SPAWN_PTY_PROCESS);
 	},
+	setImageDimensionFilePath(imageDimensionFilePath: string) {
+		ipcRenderer.send(
+			ipcChannels.SET_IMAGE_DIMENSION_FILE_PATH,
+			imageDimensionFilePath,
+		);
+	},
+	getImageDimensionFilePath() {
+		return ipcRenderer.invoke(ipcChannels.GET_IMAGE_DIMENSION_FILE_PATH);
+	}
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);

@@ -171,7 +171,7 @@ export const getPlotPath = () => {
 };
 
 export const setPlotPath = (plotData: any) => {
-	return store.set('plotPath', plotData);
+	store.set('plotPath', plotData);
 };
 
 export const getPtyData = () => {
@@ -179,5 +179,13 @@ export const getPtyData = () => {
 };
 
 export const setPtyData = (ptyData: string) => {
-	return store.set('ptyData', ptyData);
+	store.set('ptyData', ptyData);
 };
+
+export const getImageDimensionFilePath = () => {
+	return store.get('imageDimensionFilePath');
+};
+
+export const setImageDimensionFilePath = (imageDimensionFilePath: string) => {
+	store.set('imageDimensionFilePath', imageDimensionFilePath);
+}

@@ -3,13 +3,15 @@ import * as plotly from 'plotly.js-dist';
 import { DEFAULT_PLOTLY_COLORSCALE } from '@/config/config';
 import { createFile, readFile } from './files';
 
-export const getTrace = async (inputPath: string) => {
-	try {
-		const d1 = 0.0125;
-		const d2 = 0.00625;
-		const n1 = 1911;
-		const n2 = 5395;
+export type ImageDimension = {
+	d1: number,
+	d2: number,
+	n1: number,
+	n2: number,
+};
 
+export const getTrace = async (inputPath: string, { d1, d2, n1, n2 }: ImageDimension) => {
+	try {
 		const file = await readFile(inputPath, '');
 
 		const { buffer } = file;
@@ -46,13 +48,12 @@ export const getTrace = async (inputPath: string) => {
 	}
 };
 
-export const render = async (inputPath: string, outputPath: string) => {
+export const render = async (
+	inputPath: string,
+	outputPath: string,
+	{ d1, d2, n1, n2 }: ImageDimension,
+) => {
 	try {
-		const d1 = 0.0125;
-		const d2 = 0.00625;
-		const n1 = 1911;
-		const n2 = 5395;
-
 		const file = await readFile(inputPath, '');
 
 		const { buffer } = file;
@@ -84,9 +85,8 @@ export const render = async (inputPath: string, outputPath: string) => {
 		};
 
 		const layout = {
-			title: 'Velocity Model',
 			xaxis: { title: 'Inline Distance (km)' },
-			yaxis: { title: 'Depth (km)' },
+			yaxis: { title: 'Depth (km)', autorange: 'reversed' },
 		};
 
 		const graphOptions = { format: 'png', width: 800, height: 600 };

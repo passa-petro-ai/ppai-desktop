@@ -24,6 +24,8 @@ import {
 	getPlotPath,
 	setPtyData,
 	getPtyData,
+	getImageDimensionFilePath,
+	setImageDimensionFilePath,
 } from './store-actions';
 import { is } from './util';
 import { serializeMenu, triggerMenuItemById } from './utils/menu-utils';
@@ -63,6 +65,7 @@ export default {
 				modals: getOpenModals(),
 				project: getProject(),
 				plotPath: getPlotPath(),
+				imageDimensionFilePath: getImageDimensionFilePath(),
 			};
 		});
 
@@ -171,7 +174,7 @@ export default {
 			return dialog.showOpenDialog(window, { properties: ['openDirectory'] });
 		});
 
-		ipcMain.handle(ipcChannels.OPEN_PLOT_WINDOW, async (_event: any) => {
+		ipcMain.on(ipcChannels.OPEN_PLOT_WINDOW, async (_event: any) => {
 			windows.childWindow = null;
 			windows.childWindow = await createChildWindow();
 		});
@@ -187,5 +190,10 @@ export default {
 		ipcMain.on(ipcChannels.SPAWN_PTY_PROCESS, (_event: any) => {
 			terminal.spawn();
 		});
+
+		ipcMain.handle(ipcChannels.GET_IMAGE_DIMENSION_FILE_PATH, (_event: any) => getImageDimensionFilePath());
+
+		ipcMain.on(ipcChannels.SET_IMAGE_DIMENSION_FILE_PATH, (_event: any, imageDimensionFilePath: string) =>
+			setImageDimensionFilePath(imageDimensionFilePath));
 	},
 };

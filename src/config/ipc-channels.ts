@@ -33,6 +33,8 @@ const SET_PTY_DATA = 'set-pty-data';
 const RUN_PTY_COMMAND = 'run-pty-command';
 const TERMINATE_PTY_PROCESS = 'terminate-pty-process';
 const SPAWN_PTY_PROCESS = 'spawn-pty-process';
+const GET_IMAGE_DIMENSION_FILE_PATH = 'get-image-dimension-file-path';
+const SET_IMAGE_DIMENSION_FILE_PATH = 'set-image-dimension-file-path';
 
 export const ipcChannels = {
 	// main -> renderer
@@ -66,4 +68,7 @@ export const ipcChannels = {
 	OPEN_PLOT_WINDOW,
 	TERMINATE_PTY_PROCESS,
 	SPAWN_PTY_PROCESS,
+
+	SET_IMAGE_DIMENSION_FILE_PATH,
+	GET_IMAGE_DIMENSION_FILE_PATH,
 };

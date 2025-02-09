@@ -30,9 +30,11 @@ import {
 import { getBaseProjectPath } from '@/utils/getBaseProjectPath';
 import { Domain } from '@/types/fwi/domain';
 
-import { render } from '@/main/plotter';
+import { ImageDimension, render } from '@/main/plotter';
 import { Loader2 } from 'lucide-react';
 import { PROJECT_PROTOCOL } from '@/config/config';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const FormSchema = z.object({
 	csgfOutDirectory: z.string().trim().refine(refinePathValidator, {
@@ -78,8 +80,18 @@ const DEFAULTS: Domain = {
 
 const FILE_NAME = 'domain.json';
 export function FwiDomain() {
-	const { project, setIsLoading, setPlotPath } = useGlobalContext();
+	const {
+		project,
+		setIsLoading,
+		setPlotPath,
+		setImageDimensionFilePath,
+		imageDimensionFilePath,
+	} = useGlobalContext();
+
 	const [domainValues, setDomainValues] = useState<Domain>(DEFAULTS);
+
+	const [sourceValues, setSourceValues] = useState<string[]>([]);
+	const [receiverValues, setReceiverValues] = useState<string[]>([]);
 
 	const [velocityModelOutput, setVelocityModelOutput] = useState<string | null>(
 		null,
@@ -160,13 +172,16 @@ export function FwiDomain() {
 		const isCancelled = directory.canceled;
 
 		if (isCancelled) {
-			return;
+			return null;
 		}
 
 		if (directory?.filePaths?.length) {
 			const path = directory.filePaths[0];
 			form.setValue(field, path);
+			return path;
 		}
+
+		return null;
 	};
 
 	const onSubmit = async (values: z.infer<typeof FormSchema>) => {
@@ -178,7 +193,10 @@ export function FwiDomain() {
 		toast.success('Saved');
 	};
 
-	const renderModel = async (modelInputFilePath: string) => {
+	const renderModel = async (
+		modelInputFilePath: string,
+		imageDimension: ImageDimension,
+	) => {
 		if (project == null || !project.name) {
 			toast.error('Project could not be found.');
 			return;
@@ -200,12 +218,39 @@ export function FwiDomain() {
 			?.join('.');
 
 		const modelOutputFilePath = `${renderedModelsOutputPath}/${renderedModelOutputFileName}`;
-		const outputPath = await render(modelInputFilePath, modelOutputFilePath);
+		const outputPath = await render(
+			modelInputFilePath,
+			modelOutputFilePath,
+			imageDimension,
+		);
 		return outputPath;
 	};
 
-	const loadModel = async (modelInputFilePath: string) => {
-		const modelOutputFilePath = await renderModel(modelInputFilePath);
+	const getImageDimension = async (path: string) => {
+		const imageDimensionContent: string | null = await readFile(path, 'utf8');
+
+		if (!imageDimensionContent) {
+			toast.error('Could not read Image Dimension file.');
+			return null;
+		}
+
+		try {
+			const values = JSON.parse(imageDimensionContent);
+			return values;
+		} catch {
+			toast.error('The Image Dimension File file is possibly malformed.');
+			return null;
+		}
+	};
+
+	const loadModel = async (
+		modelInputFilePath: string,
+		imageDimension: ImageDimension,
+	) => {
+		const modelOutputFilePath = await renderModel(
+			modelInputFilePath,
+			imageDimension,
+		);
 
 		if (!modelOutputFilePath) {
 			toast.error('Could not find correct model type.');
@@ -215,6 +260,104 @@ export function FwiDomain() {
 		return modelOutputFilePath;
 	};
 
+	const loadSources = async (path: string) => {
+		const SOURCE_TXT = 'source.txt';
+
+		const geomDirectory = form.getValues('geomDirectory');
+		const sourceFilePath = `${geomDirectory}/${SOURCE_TXT}`;
+
+		const isSourceFileExisting = await checkFileDirectory(sourceFilePath);
+
+		if (!isSourceFileExisting) {
+			toast.error(`Could not find ${SOURCE_TXT} file.`);
+			return null;
+		}
+
+		try {
+			const sourceFileContent: string = await readFile(sourceFilePath, 'utf8');
+
+			const lines = sourceFileContent.split('\n');
+
+			const result: string[] = []; // Initialize an empty array to store the first column values
+
+			// Skip the first line (header) and process the rest
+			lines.slice(1).forEach((line) => {
+				const columns = line.trim().split(/\s+/); // Split the line by whitespace
+				if (columns.length > 0) {
+					result.push(columns[0]); // Add the first column value to the result array
+				}
+			});
+
+			return result;
+		} catch {
+			toast.error(`The ${SOURCE_TXT} file is possibly malformed.`);
+			return null;
+		}
+	};
+
+	const loadSummary = async (path: string) => {
+		setIsLoading(true);
+		const GEOM_TXT = 'geometry.txt';
+
+		const geomDirectory = form.getValues('geomDirectory');
+		const geomFilePath = `${geomDirectory}/${GEOM_TXT}`;
+
+		const isFrequenciesFileExisting = await checkFileDirectory(geomFilePath);
+
+		if (!isFrequenciesFileExisting) {
+			toast.error(`Could not find ${GEOM_TXT} file.`);
+			setIsLoading(false);
+			return null;
+		}
+
+		const properties = {
+			minimumSx: 'sx min',
+			maximumSx: 'sx max',
+			minimumSy: 'sy min',
+			maximumSy: 'sy max',
+			minimumGx: 'gx min',
+			maximumGx: 'gx max',
+			minimumGy: 'gy min',
+			maximumGy: 'gy max',
+			minimumOffset: 'offset min',
+			maximumOffset: 'offset max',
+		};
+
+		try {
+			const geomFileContent: string = await readFile(geomFilePath, 'utf8');
+
+			const lines = geomFileContent.split('\n');
+
+			const result: Record<string, number> = {}; // Initialize an empty object
+
+			// Iterate through each line
+			lines.forEach((line) => {
+				const [key, value] = line.split(' : ').map((item) => item.trim()); // Split by ' : ' and trim whitespace
+
+				// Check if the key exists in properties and map to the new key
+				if (key && value) {
+					// Reverse lookup: find the new key corresponding to the current key
+					const newKey = Object.keys(properties).find(
+						(prop) => properties[prop] === key,
+					);
+
+					// If a new key is found, assign the value to the result object
+					if (newKey) {
+						result[newKey] = Number(value); // Map the new key to the value
+					}
+				}
+			});
+
+			toast.info(`Loaded ${GEOM_TXT} File`);
+			setIsLoading(false);
+			return result;
+		} catch {
+			toast.error(`The ${GEOM_TXT} file is possibly malformed.`);
+			setIsLoading(false);
+			return null;
+		}
+	};
+
 	const renderVelocityModel = async () => {
 		setIsLoading(true);
 		setIsVelocityModelRendering(true);
@@ -222,11 +365,19 @@ export function FwiDomain() {
 		const initialVpPathState = form.getFieldState('initialVpFile');
 		const modelInputFilePath = form.getValues('initialVpFile');
 
+		const imageDimensionFilePathState =
+			form.getFieldState('imageDimensionFile');
+		const imageDimensionPath = form.getValues('imageDimensionFile');
+
 		if (
 			initialVpPathState.invalid ||
 			initialVpPathState.isValidating ||
 			initialVpPathState.isDirty ||
-			!modelInputFilePath
+			!modelInputFilePath ||
+			imageDimensionFilePathState.invalid ||
+			imageDimensionFilePathState.isValidating ||
+			imageDimensionFilePathState.isDirty ||
+			!imageDimensionPath
 		) {
 			setIsVelocityModelRendering(false);
 			setIsLoading(false);
@@ -234,10 +385,13 @@ export function FwiDomain() {
 		}
 
 		setVelocityModelOutput(null);
-		const outputPath = await loadModel(modelInputFilePath);
+		const imageDimension = await getImageDimension(imageDimensionPath);
+
+		const outputPath = await loadModel(modelInputFilePath, imageDimension);
 		if (outputPath) {
 			const velocityModelOutputPath = `${PROJECT_PROTOCOL}://${outputPath.replace('Projects/', '')}`;
 			setVelocityModelOutput(velocityModelOutputPath);
+			setImageDimensionFilePath(imageDimensionPath);
 			toast.info('Rendered Initial VP Model');
 		}
 		setIsVelocityModelRendering(false);
@@ -287,7 +441,7 @@ export function FwiDomain() {
 			loadDomainValues();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [project]);
 
 	return (
 		<div className="space-y-6">
@@ -344,7 +498,20 @@ export function FwiDomain() {
 										type="button"
 										variant="secondary"
 										className="col-span-1"
-										onClick={() => onFindFileDirectory(field.name)}
+										onClick={async () => {
+											const path = await onFindFileDirectory(field.name);
+											if (!path) return;
+
+											const summary = await loadSummary(path);
+											if (!summary) return;
+											Object.keys(summary).forEach((p) => {
+												form.setValue(p, summary[p]);
+											});
+
+											const sources = await loadSources(path);
+											if (!sources || sources.length === 0) return;
+											setSourceValues(sources);
+										}}
 									>
 										Find
 									</Button>
@@ -369,7 +536,13 @@ export function FwiDomain() {
 										type="button"
 										variant="secondary"
 										className="col-span-1"
-										onClick={async () => onFindFile(field.name)}
+										onClick={async () => {
+											const path = await onFindFile(field.name);
+											if (!path) return;
+											const values = await getImageDimension(path);
+											if (!values) return;
+											setImageDimensionFilePath(path);
+										}}
 									>
 										Find
 									</Button>
@@ -442,7 +615,7 @@ export function FwiDomain() {
 					/>
 					<Separator />
 					<h4 className="text-md font-medium leading-none">Summary</h4>
-					<div className="columns-2 min-w-[384px] max-w-[768px] space-y-4">
+					<div className="grid grid-cols-2 min-w-[384px] max-w-[768px] gap-4">
 						<FormField
 							control={form.control}
 							name="numberOfSources"
@@ -612,6 +785,47 @@ export function FwiDomain() {
 							)}
 						/>
 					</div>
+
+					<ScrollArea className="h-72 rounded-md border px-4 py-2 ">
+						<div className="grid grid-cols-2 gap-4  min-w-[384px] max-w-[768px] h-auto font-mono text-sm">
+							<div className="space-y-2">
+								{sourceValues.map((source) => {
+									if (!source) return;
+									return (
+										<div
+											key={`source-${source}`}
+											className="grid grid-cols-4 border rounded"
+										>
+											<div className="col-span-1 border-e text-center p-2">
+												<Checkbox />
+											</div>
+											<div className="col-span-3 py-2 pl-2">
+												source {source}
+											</div>
+										</div>
+									);
+								})}
+							</div>
+							<div className="space-y-2">
+								{sourceValues.map((receiver) => {
+									if (!receiver) return;
+									return (
+										<div
+											key={`receiver-${receiver}`}
+											className="grid grid-cols-4 border rounded"
+										>
+											<div className="col-span-1 border-e text-center p-2">
+												<Checkbox />
+											</div>
+											<div className="col-span-3 py-2 pl-2">
+												receiver {receiver}
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					</ScrollArea>
 
 					<div className="grid grid-cols-2 gap-4  min-w-[384px] max-w-[768px] h-auto">
 						<figure>

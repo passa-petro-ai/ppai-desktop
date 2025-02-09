@@ -47,6 +47,8 @@ interface GlobalContextType {
 	isFrequencyValid: boolean;
 	setIsParallelizationValid: (isParallelizationValid: boolean) => void;
 	isParallelizationValid: boolean;
+	imageDimensionFilePath: string;
+	setImageDimensionFilePath: (imageDimensionPath: string) => void;
 }
 
 export const GlobalContext = React.createContext<GlobalContextType>({
@@ -76,6 +78,8 @@ export const GlobalContext = React.createContext<GlobalContextType>({
 	isFrequencyValid: false,
 	setIsParallelizationValid: () => { },
 	isParallelizationValid: false,
+	imageDimensionFilePath: '',
+	setImageDimensionFilePath: () => { },
 });
 
 export function GlobalContextProvider({
@@ -100,6 +104,8 @@ export function GlobalContextProvider({
 	const [modals, setCurrentModals] = React.useState<OpenModalsTrackerType>([]);
 	const [project, setCurrentProject] = React.useState<Project | null>(null);
 	const [plotPath, setCurrentPlotPath] = React.useState<any>(null);
+	const [imageDimensionFilePath, setCurrentImageDimensionFilePath] =
+		React.useState<string>('');
 
 	const [isDomainValid, setIsDomainValid] = React.useState<boolean>(false);
 	const [isOperationValid, setIsOperationValid] =
@@ -123,6 +129,7 @@ export function GlobalContextProvider({
 						modals: d,
 						project: p,
 						plotPath: pd,
+						imageDimensionFilePath: df,
 					} = res;
 
 					setCurrentSettings(s);
@@ -132,6 +139,9 @@ export function GlobalContextProvider({
 					setCurrentModals(d);
 					setCurrentProject(p);
 					setCurrentPlotPath(pd);
+					setCurrentImageDimensionFilePath(df);
+
+					console.log({ res });
 				})
 				.catch(console.error);
 		};
@@ -213,8 +223,12 @@ export function GlobalContextProvider({
 		window.electron.setProject(newProject);
 	}, []);
 
-	const setPlotPath = useCallback((plotData: any) => {
-		window.electron.setPlotPath(plotData);
+	const setPlotPath = useCallback((path: any) => {
+		window.electron.setPlotPath(path);
+	}, []);
+
+	const setImageDimensionFilePath = useCallback((path: string) => {
+		window.electron.setImageDimensionFilePath(path);
 	}, []);
 
 	const value = useMemo(() => {
@@ -245,6 +259,8 @@ export function GlobalContextProvider({
 			isFrequencyValid,
 			setIsParallelizationValid,
 			isParallelizationValid,
+			imageDimensionFilePath,
+			setImageDimensionFilePath,
 		};
 	}, [
 		appInfo,
@@ -272,6 +288,8 @@ export function GlobalContextProvider({
 		isFrequencyValid,
 		setIsParallelizationValid,
 		isParallelizationValid,
+		imageDimensionFilePath,
+		setImageDimensionFilePath,
 	]);
 
 	return (

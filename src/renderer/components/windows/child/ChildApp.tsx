@@ -9,12 +9,14 @@ import {
 	SelectValue,
 } from '@/components/ui/select';
 import { DEFAULT_PLOTLY_COLORSCALE } from '@/config/config';
+import { readFile } from '@/main/files';
 import { getTrace } from '@/main/plotter';
 import { useGlobalContext } from '@/renderer/context/global-context';
 import '@/renderer/styles/globals.scss';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Plotly from 'react-plotly.js';
+import { toast } from 'sonner';
 
 const Colorscale = [
 	'Blackbody',
@@ -38,7 +40,7 @@ const Colorscale = [
 ];
 
 function ChildApp() {
-	const { plotPath } = useGlobalContext();
+	const { plotPath, imageDimensionFilePath } = useGlobalContext();
 
 	const [data, setData] = useState<any>(null);
 	const [colorscale, setColorscale] = useState<string>(
@@ -46,20 +48,38 @@ function ChildApp() {
 	);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
+	const getImageDimension = async (path: string) => {
+		const imageDimensionContent: string | null = await readFile(path, 'utf8');
+
+		if (!imageDimensionContent) {
+			toast.error('Could not read Image Dimension file.');
+			return null;
+		}
+
+		try {
+			const values = JSON.parse(imageDimensionContent);
+			return values;
+		} catch {
+			toast.error('The Image Dimension File file is possibly malformed.');
+			return null;
+		}
+	};
+
 	const loadVelocityModelTrace = async (
 		color: string = DEFAULT_PLOTLY_COLORSCALE,
 	) => {
 		setIsLoading(true);
 		const modelInputFilePath = plotPath;
-
-		const trace = await getTrace(modelInputFilePath);
+		const imageDimension = await getImageDimension(imageDimensionFilePath);
+		const trace = await getTrace(modelInputFilePath, imageDimension);
 		setData({ ...trace, colorscale: color });
 		setIsLoading(false);
 	};
 
 	useEffect(() => {
 		if (plotPath) loadVelocityModelTrace();
-	}, [plotPath]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [plotPath, imageDimensionFilePath]);
 
 	return (
 		<div className="w-[100vw] h-[100vh]">
@@ -75,6 +95,9 @@ function ChildApp() {
 					layout={{
 						responsive: true,
 						autosize: true,
+						yaxis: {
+							autorange: 'reversed',
+						},
 					}}
 					data={[{ ...data }]}
 					style={{ width: '100%', height: 'calc(100% - (69px))' }}
